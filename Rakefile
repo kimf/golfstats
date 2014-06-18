@@ -1,135 +1,74 @@
+$:.unshift File.join(File.expand_path(File.dirname(__FILE__)), 'models')
+require 'yaml'
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
 require 'open-uri'
-require 'nokogiri'
-require 'typhoeus'
-require 'debugger'
-require 'dalli'
-require 'active_support'
-require 'active_record'
-require 'logger'
 
 
-ActiveRecord::Base.establish_connection(
-  adapter:  "postgresql",
-  host:     "localhost",
-  database: "golfstats_development",
-  username: "kimf",
-  password: ""
-)
-ActiveRecord::Base.logger = Logger.new(STDERR)
-
-ActiveRecord::Migration.class_eval do
-  drop_table :scorecards if ActiveRecord::Base.connection.table_exists? 'scorecards'
-  drop_table :scores     if ActiveRecord::Base.connection.table_exists? 'scores'
-
-  create_table :scorecards do |t|
-    t.date    :date
-    t.string  :course
-
-    t.integer :par
-    t.integer :out
-    t.integer :in
-    t.integer :strokes_out
-    t.integer :srokes_in
-    t.integer :strokes
-    t.integer :points
-    t.integer :putts
-    t.integer :putts_avg
-    t.integer :putts_out
-    t.integer :putts_in
-    t.integer :girs
-    t.integer :firs
-    t.integer :strokes_over_par
-    t.integer :scores_count
-    t.integer :not_par_three_holes
-    t.integer :distance
-    t.string  :consistency
-  end
-
-  add_index :scorecards, :date
-  add_index :scorecards, :course
-
-
-  create_table :scores do |t|
-    t.integer :scorecard_id
-    t.integer :hole
-    t.integer :distance
-    t.integer :hcp
-    t.integer :par
-    t.integer :strokes
-    t.integer :points
-    t.integer :tee_club
-    t.integer :fairway
-    t.integer :putts
-    t.integer :green_bunker, default: nil
-    t.integer :penalties, default: nil
-    t.integer :fir
-    t.integer :gir
-    t.integer :strokes_over_par
-    t.integer :name
-    t.integer :hio
-    t.integer :scrambling
-    t.integer :sand_save, default: nil
-    t.integer :up_and_down, default: nil
-  end
-
-  add_index :scores, :scorecard_id
-  add_index :scores, :hole
-  add_index :scores, :fir
-  add_index :scores, :gir
-  add_index :scores, :scrambling
-  add_index :scores, :sand_save
-  add_index :scores, :up_and_down
+Dir["./backend/models/*.rb"].each do |file|
+ require "./#{file}"
 end
 
-class Scorecard < ActiveRecord::Base
-  has_many :scores
-end
-
-class Score < ActiveRecord::Base
-  belongs_to :scorecard
-end
-
-NAMES = ActiveSupport::OrderedHash.new
-NAMES[-2] = 'eagle'
-NAMES[-1] = 'birdie'
-NAMES[0] = 'par'
-NAMES[1] = 'bogey'
-NAMES[2] = 'double'
-NAMES[3] = 'triple'
-NAMES[4] = 'quadruple'
-NAMES.freeze
+@environment = ENV['RACK_ENV'] || 'development'
+@dbconfig = YAML.load(File.read('backend/database.yml'))
+ActiveRecord::Base.establish_connection @dbconfig[@environment]
+ActiveRecord::Base.logger = Logger.new(STDOUT)
 
 
-class Cache
-  def initialize
-    @client = Dalli::Client.new
+
+
+namespace :db do
+
+  desc "do migrations"
+  task :migrate do
+    ActiveRecord::Migration.verbose = true
+    ActiveRecord::Migrator.migrate "backend/db/migrate", ENV['VERSION'] ? ENV['VERSION'].to_i : nil
   end
 
-  def clear
-    @client.flush_all
+  desc "drop db"
+  task :drop do
+    puts "dropping #{@dbconfig[@environment]["database"]}"
+    %x( dropdb #{@dbconfig[@environment]["database"]} )
   end
 
-  def get(request)
-    @client.get(request.cache_key)
+  desc "create db"
+  task :create do
+    puts "creating #{@dbconfig[@environment]["database"]}"
+    %x( createdb -E UTF8 -T template0 #{@dbconfig[@environment]["database"]} )
   end
-
-  def set(request, response)
-    @client.set(request.cache_key, response)
-  end
-end
-
-desc "Builds and deploys to fransman.se"
-task :deploy do
-  sh "middleman build"
-  sh "middleman deploy"
-end
-
-
-namespace :data do
 
   desc "Imports scorecards from golfshot.com"
   task :import do
 
+    NAMES = ActiveSupport::OrderedHash.new
+    NAMES[-2] = 'eagle'
+    NAMES[-1] = 'birdie'
+    NAMES[0] = 'par'
+    NAMES[1] = 'bogey'
+    NAMES[2] = 'double'
+    NAMES[3] = 'triple'
+    NAMES[4] = 'quadruple'
+    NAMES.freeze
+
+
+    class Cache
+      def initialize
+        @client = Dalli::Client.new
+      end
+
+      def clear
+        @client.flush_all
+      end
+
+      def get(request)
+        @client.get(request.cache_key)
+      end
+
+      def set(request, response)
+        @client.set(request.cache_key, response)
+      end
+    end
     #Cache.new.clear #sometimes, stuff works in mysterious ways
 
     Typhoeus::Config.cache = Cache.new
@@ -170,47 +109,11 @@ namespace :data do
 
     end
     hydra.run
-
-    # scorecards.select{|s| s.scores.size < 18 }.each{|s| scorecards.delete(s) }
-    # scorecards.select{|s| s.date.include?('2010') }.each{|s| scorecards.delete(s) }
-
-    # scores = []
-
-    # scorecards.each do |s|
-    #   scorecard_scores = s.scores
-    #   scores << scorecard_scores
-    #   s.scores = scorecard_scores.collect{|s| s.id }
-    # end
-
-    # data = {scorecards: []}
-    # data[:scorecards] = scorecards.sort_by!{|s| s.date }.reverse
-    # json = data.to_json
-    # File.open("data/scorecards.json","w") do |f|
-    #   f.write(json)
-    # end
-
-    # data = {scores: []}
-    # data[:scores] = scores.to_json
-    # json = data.to_json
-    # File.open("data/scores.json", "w") do |f|
-    #   f.write(json)
-    # end
-
-    #18holers = scorecards.select{|s| s.scores_count == 18}
-    # average_score
-    # average_girs_percentage
-    # average_firs_percentage
-    # average_gir_putts
-    # average_putts
-    # consistency
-
-
-    # File.open("data/player.json","w") do |f|
-    #   f.write(json)
-    # end
-
     puts "- FINISHED ------------------------------------------------------------------------"
   end
+
+  desc 'Rebuild the databases'
+  task :rebuild => [:drop, :create, :migrate, :import]
 end
 
 
@@ -227,6 +130,7 @@ def parse_page(doc, round_url)
   puts "------ Starting with: course: #{course_title}, date: #{parsed_date}"
 
   scorecard = Scorecard.new(date: parsed_date, course: course_title)
+  score_objects = []
 
   #scores
   table_rows = doc.css("div#scorecard table tr")
@@ -274,7 +178,9 @@ def parse_page(doc, round_url)
 
         score.up_and_down   =  score.gir ? nil : (score.putts == 1)
 
-        scorecard.scores << score
+        if score.save
+          score_objects << score
+        end
       end
     end
   end
@@ -282,8 +188,9 @@ def parse_page(doc, round_url)
 
   #scorecard data
   scorecard.par       = table_rows[3].css('td')[21].inner_html.to_i
-  scorecard.out       = table_rows[4].css('td')[10].inner_html.to_i
-  scorecard.in        = table_rows[4].css('td')[20].inner_html.to_i
+
+  scorecard.strokes_out = table_rows[4].css('td')[10].inner_html.to_i
+  scorecard.strokes_in  = table_rows[4].css('td')[20].inner_html.to_i
 
   scorecard.strokes   = table_rows[4].css('td')[21].inner_html.to_i
   scorecard.points    = table_rows[6].css('td')[21].inner_html.to_i
@@ -294,17 +201,19 @@ def parse_page(doc, round_url)
 
 
   #calculated scorecard data
-  scorecard.girs      = scorecard.scores.select{|s| s.gir == true }.length
-  scorecard.firs      = scorecard.scores.select{|s| s.fir == true }.length
+  scorecard.girs      = score_objects.select{|s| s.gir == true }.length
+  scorecard.firs      = score_objects.select{|s| s.fir == true }.length
 
   scorecard.strokes_over_par    = scorecard.strokes - scorecard.par
-  scorecard.scores_count        = scorecard.scores.length
-  scorecard.not_par_three_holes = scorecard.scores.select{|s| s.par != 3 }.length
+  scorecard.scores_count        = score_objects.length
+  scorecard.not_par_three_holes = score_objects.select{|s| s.par != 3 }.length
 
-  scorecard.consistency = scorecard.scores.map{|s| s.strokes_over_par }.join(',')
-  scorecard.distance    = scorecard.scores.map{|s| s.distance.to_i }.inject(:+)
+  scorecard.consistency = score_objects.map(&:strokes_over_par)
+  scorecard.distance    = score_objects.sum(&:distance)
 
   #scorecard.scrambling_percentage = ((scramblings.to_f/missed_greens.to_f)*100)
+
+  scorecard.scores = score_objects.map(&:id)
 
   scorecard.save
 end
