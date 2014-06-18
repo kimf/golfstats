@@ -12,7 +12,6 @@ gem 'rack-cors'
 gem 'activesupport', require: 'active_support'
 gem 'activerecord', require: 'active_record'
 gem 'pg'
-gem 'surus'
 
 gem 'logger'
 

@@ -55,10 +55,28 @@ class GolfstatsApi < Grape::API
   get "/scorecards" do
     #authenticate!
     #current_user.scorecards
-    after_date = params[:after_date].nil? ? "2010-01-01" : params[:after_date]
-    @scorecards = Scorecard.after_date(after_date).all_json(
-      columns: [:id, :date, :par, :strokes_out, :strokes_in, :strokes, :putts, :putts_avg, :putts_out, :putts_in, :girs, :firs, :strokes_over_par, :scores_count, :not_par_three_holes, :distance, :consistency, :scores, :updated_at]
-    )
+    after_date = params[:after_date].nil? ? "2014-01-01" : params[:after_date]
+
+    query = <<-SQL
+     SELECT * FROM scorecards WHERE scores_count = 18
+    SQL
+
+    @scorecards = {scorecards: Scorecard.find_by_sql(query)}.to_json
+    # Scorecard.after_date(after_date).all_json(
+    #                 columns: [
+    #                           :id, :date, :par, :strokes_out, :strokes_in, :strokes, :putts, :putts_avg, :putts_out, :putts_in, :girs, :firs, :strokes_over_par,
+    #                           :scores_count, :not_par_three_holes, :distance, :consistency, :scores, :updated_at]
+    #             )
+  end
+
+  desc "Returns scores for given ids"
+  get "/scores" do
+    ids = params[:ids]
+    query = <<-SQL
+      SELECT * FROM scores WHERE id IN(#{ids})
+    SQL
+
+    @scores = {scores: Score.find_by_sql(query)}.to_json
   end
 
   # desc "Create a scorecard and scores"

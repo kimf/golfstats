@@ -10,7 +10,7 @@ class InitialMigration <  ActiveRecord::Migration
       t.integer :strokes
       t.integer :points
       t.integer :putts
-      t.integer :putts_avg
+      t.float   :putts_avg
       t.integer :putts_out
       t.integer :putts_in
       t.integer :girs
@@ -39,18 +39,17 @@ class InitialMigration <  ActiveRecord::Migration
       t.integer :strokes
       t.integer :points
       t.integer :tee_club
-      t.integer :fairway
       t.integer :putts
-      t.integer :green_bunker, default: nil
-      t.integer :penalties, default: nil
-      t.integer :fir
-      t.integer :gir
+      t.integer :green_bunker
+      t.integer :penalties
+      t.boolean :fir
+      t.boolean :gir
       t.integer :strokes_over_par
       t.integer :name
-      t.integer :hio
-      t.integer :scrambling
-      t.integer :sand_save, default: nil
-      t.integer :up_and_down, default: nil
+      t.boolean :hio
+      t.boolean :scrambling
+      t.boolean :sand_save, default: nil
+      t.boolean :up_and_down, default: nil
 
       t.timestamps
     end
