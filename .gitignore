@@ -2,7 +2,7 @@
 
 # compiled output
 frontend/dist
-frontend/tmp
+frontend/tmp/*
 
 # dependencies
 frontend/node_modules

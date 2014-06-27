@@ -17,18 +17,36 @@ ActiveRecord::Base.logger = Logger.new(STDOUT)
 #, :username => "youruser", :password => "yourpassword"  )
 
 
-#old formatter, for now! see: http://code.dblock.org/grape-040-released-w-stricter-json-format-support-more
-module Grape
-  module Formatter
-    module Json
-      class << self
-        def call(object, env)
-          return object if ! object || object.is_a?(String)
-          return object.to_json if object.respond_to?(:to_json)
-          raise Grape::Exceptions::InvalidFormatter.new(object.class, 'json')
-        end
-      end
-    end
+# #old formatter, for now! see: http://code.dblock.org/grape-040-released-w-stricter-json-format-support-more
+# module Grape
+#   module Formatter
+#     module Json
+#       class << self
+#         def call(object, env)
+#           return object if ! object || object.is_a?(String)
+#           return object.to_json if object.respond_to?(:to_json)
+#           raise Grape::Exceptions::InvalidFormatter.new(object.class, 'json')
+#         end
+#       end
+#     end
+#   end
+# end
+
+class Cache
+  def initialize
+    @client = Dalli::Client.new
+  end
+
+  def clear
+    @client.flush_all
+  end
+
+  def get(key)
+    @client.get(key)
+  end
+
+  def set(key, value)
+    @client.set(key, value)
   end
 end
 
@@ -45,6 +63,10 @@ class GolfstatsApi < Grape::API
     #   @current_user ||= User.authorize!(env)
     # end
 
+    def cache
+      Cache.new
+    end
+
     # def authenticate!
     #   error!('401 Unauthorized', 401) unless current_user
     # end
@@ -55,18 +77,25 @@ class GolfstatsApi < Grape::API
   get "/scorecards" do
     #authenticate!
     #current_user.scorecards
-    after_date = params[:after_date].nil? ? "2014-01-01" : params[:after_date]
-
-    query = <<-SQL
-     SELECT * FROM scorecards WHERE scores_count = 18
-    SQL
-
-    @scorecards = {scorecards: Scorecard.find_by_sql(query)}.to_json
+    #after_date = params[:after_date].nil? ? "2014-01-01" : params[:after_date]
     # Scorecard.after_date(after_date).all_json(
     #                 columns: [
     #                           :id, :date, :par, :strokes_out, :strokes_in, :strokes, :putts, :putts_avg, :putts_out, :putts_in, :girs, :firs, :strokes_over_par,
     #                           :scores_count, :not_par_three_holes, :distance, :consistency, :scores, :updated_at]
     #             )
+
+    query = <<-SQL
+     SELECT * FROM scorecards WHERE scores_count = 18
+    SQL
+    @scorecards = cache.get('scorecards_json') || nil
+    if @scorecards.nil?
+      @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
+      cache.set('scorecards_json', @scorecards)
+    end
+    #header 'Last-Modified', Date.today.httpdate
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    @scorecards
   end
 
   desc "Returns scores for given ids"
@@ -75,22 +104,6 @@ class GolfstatsApi < Grape::API
     query = <<-SQL
       SELECT * FROM scores WHERE id IN(#{ids})
     SQL
-
     @scores = {scores: Score.find_by_sql(query)}.to_json
   end
-
-  # desc "Create a scorecard and scores"
-  # post "/scorecards" do
-  #   new_params = params[:scorecard].to_hash
-  #   scores = new_params.delete("scores")
-  #   Scorecard.transaction do
-  #     scorecard =  Scorecard.create(new_params)
-  #     scores.each do |s|
-  #       s[:scorecard] = scorecard
-  #       Score.create(s)
-  #     end
-  #     {succes: true, message: "Scorecard was synced!"}.to_json
-  #   end
-  # end
-
 end
