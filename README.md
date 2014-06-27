@@ -1,6 +1,6 @@
 # Golfstats
 
-This README outlines the details of how this app is built up
+Ember app with Grape::Api backend.
 
 ## Installation
 

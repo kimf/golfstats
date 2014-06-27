@@ -10,4 +10,4 @@ This README outlines the details of collaborating on this application.
 ## Running
 
 * `rackup config.ru`
-* Visit your app at http://localhost:9200.
+* Visit your app at http://localhost:9292.
