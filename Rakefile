@@ -40,6 +40,7 @@ namespace :db do
 
   desc "Imports scorecards from golfshot.com"
   task :import do
+    ActiveRecord::Base.logger = nil
 
     NAMES = ActiveSupport::OrderedHash.new
     NAMES[-2] = 'eagle'
