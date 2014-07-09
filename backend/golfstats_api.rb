@@ -75,24 +75,16 @@ class GolfstatsApi < Grape::API
 
   desc "Return scorecards updated after given date"
   get "/scorecards" do
-    #authenticate!
-    #current_user.scorecards
-    #after_date = params[:after_date].nil? ? "2014-01-01" : params[:after_date]
-    # Scorecard.after_date(after_date).all_json(
-    #                 columns: [
-    #                           :id, :date, :par, :strokes_out, :strokes_in, :strokes, :putts, :putts_avg, :putts_out, :putts_in, :girs, :firs, :strokes_over_par,
-    #                           :scores_count, :not_par_three_holes, :distance, :consistency, :scores, :updated_at]
-    #             )
-
     query = <<-SQL
-     SELECT * FROM scorecards WHERE scores_count = 18
+      SELECT * FROM scorecards WHERE scores_count = 18
     SQL
-    @scorecards = cache.get('scorecards_json') || nil
+
+    @scorecards = cache.get("scorecards_json") || nil
     if @scorecards.nil?
       @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
-      cache.set('scorecards_json', @scorecards)
+      cache.set("scorecards_json", @scorecards)
     end
-    #header 'Last-Modified', Date.today.httpdate
+
     header 'Cache-Control', 'public, max-age=31536000'
     header 'Expires', (Date.today + 1.year).httpdate
     @scorecards
@@ -101,9 +93,19 @@ class GolfstatsApi < Grape::API
   desc "Returns scores for given ids"
   get "/scores" do
     ids = params[:ids]
+
     query = <<-SQL
       SELECT * FROM scores WHERE id IN(#{ids})
     SQL
-    @scores = {scores: Score.find_by_sql(query)}.to_json
+
+    @scores = cache.get("scorecards_#{ids.join('_')}_json") || nil
+    if @scores.nil?
+      @scores = {scores: Score.find_by_sql(query)} #.to_json
+      cache.set("scorecards_#{ids.join('_')}_json", @scores)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    @scores
   end
 end

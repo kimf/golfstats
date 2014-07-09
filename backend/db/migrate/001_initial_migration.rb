@@ -3,6 +3,7 @@ class InitialMigration <  ActiveRecord::Migration
     create_table :scorecards do |t|
       t.date    :date
       t.string  :course
+      t.string  :golfshot_id
 
       t.integer :par
       t.integer :strokes_out

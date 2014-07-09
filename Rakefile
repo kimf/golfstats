@@ -38,6 +38,29 @@ namespace :db do
     %x( createdb -E UTF8 -T template0 #{@dbconfig[@environment]["database"]} )
   end
 
+  desc "calculate score avg for firs VS non firs for every hole"
+  task :avg do
+    ActiveRecord::Base.logger = nil
+    cards = Scorecard.played_between('2013-01-01', Date.today.to_s).where(course: 'Nynäshamns Golfklubb - Dal-Sjö')
+    scores = Score.find(cards.map(&:scores)).select{|s| s.par != 3 }
+    scores.map(&:hole).uniq.each do |hole|
+      hole_scores = scores.select{|s| s.hole == hole}
+      unless hole_scores.empty?
+        score = hole_scores.first
+        puts "################## HÅL #{score.hole} IS A PAR #{score.par} ##################"
+
+        firs     = hole_scores.select{|s| s.fir? }
+        non_firs = hole_scores.select{|s| !s.fir? }
+
+        firs_avg     = firs.map { |x| x.strokes.to_f }.inject(:+) / firs.length
+        non_firs_avg = non_firs.map { |x| x.strokes.to_f }.inject(:+) / non_firs.length
+
+        puts (firs_avg - non_firs_avg).round(1)
+
+      end
+    end
+  end
+
   desc "Imports scorecards from golfshot.com"
   task :import do
     ActiveRecord::Base.logger = nil
@@ -95,11 +118,12 @@ namespace :db do
         rows.reverse.each do |row|
           round_id = row["onclick"]
           if round_id
-            round_url = "http://golfshot.com/Rounds/Detail/#{round_id.split("'")[1]}"
+            round_id = round_id.split("'")[1]
+            round_url = "http://golfshot.com/Rounds/Detail/#{round_id}"
             round_request = Typhoeus::Request.new(round_url, followlocation: true)
             round_request.on_complete do |response|
               doc = Nokogiri::HTML(response.body)
-              scorecards << parse_page(doc, round_url)
+              scorecards << parse_page(doc, round_url, round_id)
             end
             hydra.queue(round_request)
           end
@@ -119,7 +143,7 @@ end
 
 
 
-def parse_page(doc, round_url)
+def parse_page(doc, round_url, round_id)
   #date
   date = doc.css("div.roundInfoColLeft h3")[2]
   parsed_date = Date.parse(date.inner_html).to_s
@@ -128,9 +152,19 @@ def parse_page(doc, round_url)
   course_title  = doc.css("div.titleBar h2 a").inner_html
   doc.css('div.titleBar').remove
 
-  puts "------ Starting with: course: #{course_title}, date: #{parsed_date}"
 
-  scorecard = Scorecard.new(date: parsed_date, course: course_title)
+  scorecard = Scorecard.where(golfshot_id: round_id).first
+  if scorecard.nil?
+    new_or_old = "IMPORTING: "
+    scorecard = Scorecard.new(date: parsed_date, course: course_title, golfshot_id: round_id)
+  else
+    new_or_old = "UPDATING: "
+    scorecard.date = parsed_date
+    scorecard.course = course_title
+    scorecard.scores.each{|s| Score.find(s).destroy }
+  end
+  puts "------ #{new_or_old} Starting with: course: #{course_title}, date: #{parsed_date}"
+
   score_objects = []
 
   #scores
