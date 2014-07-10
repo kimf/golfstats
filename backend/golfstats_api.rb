@@ -75,14 +75,17 @@ class GolfstatsApi < Grape::API
 
   desc "Return scorecards updated after given date"
   get "/scorecards" do
+    year = params[:year].nil? ? "2014" : params[:year]
+    year_string = params[:year] == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
+
     query = <<-SQL
-      SELECT * FROM scorecards WHERE scores_count = 18
+      SELECT * FROM scorecards WHERE scores_count = 18 #{year_string}
     SQL
 
-    @scorecards = cache.get("scorecards_json") || nil
+    @scorecards = cache.get("scorecards_#{year}_json") || nil
     if @scorecards.nil?
       @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
-      cache.set("scorecards_json", @scorecards)
+      cache.set("scorecards_#{year}_json", @scorecards)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
