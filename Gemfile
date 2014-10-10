@@ -26,6 +26,9 @@ gem 'dalli'
 
 group :development do
   gem 'guard'
+  #gem 'guard-sass'
+  gem 'guard-livereload'
+  gem 'rack-livereload'
   gem 'foreman'
   gem 'byebug'
 end

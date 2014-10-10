@@ -12,62 +12,65 @@ var color_by_strokes = {
   '2':  double_color
 }
 
+var year = getUrlParameter('year');
+
+$.ajaxSetup({ cache: false });
+
+if(typeof year === "undefined"){ year = "All"; }
+
+var scorecard_template = Handlebars.compile($("#scorecard-template").html());
 
 var app = {
   // Application Constructor
   initialize: function() {
     this.bindEvents();
   },
-  // Bind Event Listeners
-  //
-  // Bind any events that are required on startup. Common events are:
-  // 'load', 'deviceready', 'offline', and 'online'.
+
+
   bindEvents: function() {
-    document.addEventListener('DOMContentLoaded', this.onDeviceReady, false); //tmp to be able to play in browser
+    document.addEventListener('DOMContentLoaded', this.onDeviceReady, false);
 
     $( "#scorecards" ).on( "addedToScreen", function( event ) {
       $(this).find(".smallpie:not(:has(*))").smallPie();
       $(this).find(".smalldonut:not(:has(*))").smallDonut();
-      $(this).trigger( 'liAddedToScreen' );
+      // $(this).trigger( 'liAddedToScreen' );
     });
 
-    $( "#scorecards" ).on( "liAddedToScreen", function( event ) {
-      var ball = Impulse($(this).find('li:first-child')).style('scale', function(s) { return s })
-      var li = $(this);
-      ball.spring({ tension: 50, damping: 10 })
-      .from(0)
-      .to(1).start().then( $(li).removeClass('notanimated') );
+    // $( "#scorecards" ).on( "liAddedToScreen", function( event ) { });
+
+    $('.nav-tabs li a').click(function(e){
+      e.preventDefault();
+      year = $(this).attr('href').split('=')[1];
+      $('#scorecards li').remove();
+      app.setActiveYear(year);
     });
   },
 
   onDeviceReady: function() {
-    app.getScorecards();
+    app.setActiveYear(year);
+    app.createCharts();
   },
 
-  getScorecards: function() {
-    $.getJSON('http://localhost:9292/scorecards', function(data){
-       $.each( data, function( key, val ) {
-          $.each( val, function( key, val ) {
-            app.addScorecardToList(val);
-          });
+  setActiveYear: function(year){
+    $('.nav-tabs li').removeClass('active');
+    $('a[href*="'+year+'"]').addClass('active');
+    app.getScorecards(year);
+  },
+
+  getScorecards: function(year) {
+    $.getJSON('http://localhost:9292/scorecards?year='+year, function(data){
+      $.each( data, function( key, val ) {
+        $.each( val, function( key, val ) {
+          app.addScorecardToList(val);
         });
+      });
     });
   },
 
   addScorecardToList: function(scorecard) {
-
-    if(scorecard.scores_count != 18){
-      return false ;
-    }
-
-    var source   = $("#scorecard-template").html();
-    var template = Handlebars.compile(source);
-    var html     = template(scorecard);
-
-    $("#scorecards").prepend(html);
+    $("#scorecards").prepend( scorecard_template(scorecard) );
     $('#scorecards').trigger('addedToScreen');
-
-  }
+  },
 };
 
 
@@ -81,9 +84,7 @@ Handlebars.registerHelper('strokebar', function(strokes) {
   function createStrokeBar(element, index, array) {
     barHeight = (parseInt(element)*-6);
     // color = color_by_strokes[element];
-    // if(typeof color === "undefined"){
-    //   color = "#000";
-    // }
+    // if(typeof color === "undefined"){ color = "#000"; }
     string = string + '<span class="bar" style="margin-top: '+barHeight+'px;"></span>';
   };
 
@@ -265,4 +266,18 @@ function pieChart(percentage, size) {
     // front.setAttributeNS(null, "fill", "#ecf0f1");
     // chart.appendChild(front);
     return chart;
+}
+
+function getUrlParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
 }

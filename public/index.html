@@ -13,11 +13,26 @@
 </head>
 <body>
 
+  <div class="navbar navbar-static-top navbar-default">
+    <div class="container">
+      <span class="navbar-brand">
+        MY GOLFSTATS
+      </span>
+
+
+      <div class="btn-group btn-group-sm navbar-btn-group pull-right">
+        <a class="btn btn-default" href="/?year=All">ALL</a>
+        <a class="btn btn-default" href="/?year=2010">2010</a>
+        <a class="btn btn-default" href="/?year=2011">2011</a>
+        <a class="btn btn-default" href="/?year=2012">2012</a>
+        <a class="btn btn-default" href="/?year=2013">2013</a>
+        <a class="btn btn-default" href="/?year=2014">2014</a>
+      </div>
+    </div>
+  </div>
+
+
   <div class="container-fluid">
-    <h2 class="page-header">
-      KIM's GOLFSTATS
-      <small class="pull-right">2014 SEASON</small>
-    </h2>
 
     <ul id="scorecards" class="list-group">
     </ul>
@@ -31,7 +46,7 @@
         <small class="pull-right">{{shortDate date}}</small>
       </div>
 
-      <div class="wrapper strokes">{{green_or_red strokes 80 85}}</div>
+      <div class="wrapper strokes">{{strokes}}</div>
 
       <div class="wrapper score_sum">
         <small></small>
@@ -68,7 +83,7 @@
   <script src="js/jquery-2.1.1.min.js"></script>
   <script src="js/handlebars-v2.0.0.js"></script>
   <script src="js/moment.js"></script>
-  <script src="js/impulse.js"></script>
+  <!-- <script src="js/impulse.js"></script> -->
   <script src="js/index.js"></script>
 
   <script type="text/javascript">
