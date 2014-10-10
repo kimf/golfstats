@@ -14,7 +14,7 @@ end
 use Rack::ConditionalGet
 use Rack::ETag
 
-use Rack::Static, :urls => [""], :root => 'public', :index =>
+use Rack::Static, :urls => ['/index.html', '/js', '/css'], :root => 'public', :index =>
 'index.html'
 
 run GolfstatsApi
