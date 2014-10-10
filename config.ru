@@ -1,5 +1,8 @@
+require './golfstats_api'
+
+require 'rack'
+require 'rack/contrib'
 require 'rack/cors'
-require './backend/golfstats_api'
 
 use Rack::Cors do
   allow do
@@ -10,5 +13,8 @@ end
 
 use Rack::ConditionalGet
 use Rack::ETag
+
+use Rack::Static, :urls => [""], :root => 'public', :index =>
+'index.html'
 
 run GolfstatsApi

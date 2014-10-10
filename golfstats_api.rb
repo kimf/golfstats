@@ -4,12 +4,12 @@ require 'yaml'
 require 'bundler/setup'
 Bundler.require(:default)
 
-Dir["backend/models/*.rb"].each do |file|
+Dir["models/*.rb"].each do |file|
  require "./#{file}"
 end
 
 @environment = ENV['RACK_ENV'] || 'development'
-@dbconfig = YAML.load(File.read('backend/database.yml'))
+@dbconfig = YAML.load(File.read('database.yml'))
 ActiveRecord::Base.establish_connection @dbconfig[@environment]
 ActiveRecord::Base.logger = Logger.new(STDOUT)
 #, :username => "youruser", :password => "yourpassword"  )
@@ -56,7 +56,6 @@ class GolfstatsApi < Grape::API
     #   error!('401 Unauthorized', 401) unless current_user
     # end
   end
-
 
   desc "Return scorecards updated after given date"
   get "/scorecards" do

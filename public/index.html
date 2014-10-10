@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="msapplication-tap-highlight" content="no" />
+<!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+<link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="css/index.css" />
+<title>Golfstats for the win</title>
+</head>
+<body>
+
+  <div class="container-fluid">
+    <h2 class="page-header">
+      KIM's GOLFSTATS
+      <small class="pull-right">2014 SEASON</small>
+    </h2>
+
+    <ul id="scorecards" class="list-group">
+    </ul>
+  </div>
+
+
+  <script id="scorecard-template" type="text/x-handlebars-template">
+    <li class="list-group-item notanimate" data-name="{{name}}">
+      <div class="header">
+        <small class="pull-left">{{truncate course 50}}</small>
+        <small class="pull-right">{{shortDate date}}</small>
+      </div>
+
+      <div class="wrapper strokes">{{green_or_red strokes 80 85}}</div>
+
+      <div class="wrapper score_sum">
+        <small></small>
+        {{donutChart scoring_distribution 30}}
+        <span class="strokes_over_par">+{{strokes_over_par}}</span>
+      </div>
+
+      <div class="wrapper gir">
+        <small>GIR</small>
+        {{pieChart girs scores_count 20}}
+        {{percentage girs scores_count}}
+      </div>
+
+      <div class="wrapper fir">
+        <small>FIR</small>
+        {{pieChart firs not_par_three_holes 20}}
+        {{percentage firs not_par_three_holes}}
+      </div>
+
+      <div class="wrapper putts">
+        <small>PUTTS</small>
+        <div class="total_putts inside">{{green_or_red putts 25 30}}</div>
+        {{green_or_red putts_avg 1.7 1.8}} / {{green_or_red putts_gir_avg 1.8 1.9}}
+      </div>
+
+      <div class="strokebar">
+        <span class="parbar"></span>
+        {{strokebar consistency}}
+      </div>
+    </li>
+  </script>
+
+
+  <script src="js/jquery-2.1.1.min.js"></script>
+  <script src="js/handlebars-v2.0.0.js"></script>
+  <script src="js/moment.js"></script>
+  <script src="js/impulse.js"></script>
+  <script src="js/index.js"></script>
+
+  <script type="text/javascript">
+    app.initialize();
+  </script>
+
+  </body>
+</html>

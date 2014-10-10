@@ -8,6 +8,7 @@ gem 'thin'
 gem 'oj'
 gem 'grape'
 gem 'rack-cors'
+gem 'rack-contrib', require: 'rack/contrib'
 
 gem 'activesupport', require: 'active_support'
 gem 'activerecord', require: 'active_record'
@@ -24,6 +25,7 @@ gem 'dalli'
 
 
 group :development do
+  gem 'guard'
   gem 'foreman'
   gem 'byebug'
 end

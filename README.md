@@ -1,17 +1,13 @@
 # Golfstats
 
-Ember app with Grape::Api backend.
+This README outlines the details of collaborating on this application.
 
 ## Installation
 
 * `git clone` this repository
 * `bundle install`
-* `cd frontend`
-* `npm install`
-* `bower install`
 
 ## Running
 
-* `foreman start`
-* Visit your app at http://localhost:4200.
-* The api is live at http://localhost:9200.
+* `rackup config.ru`
+* Visit your app at http://localhost:9292.
