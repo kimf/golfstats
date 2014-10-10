@@ -4,6 +4,7 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 require 'open-uri'
+require 'byebug'
 
 
 Dir["./backend/models/*.rb"].each do |file|

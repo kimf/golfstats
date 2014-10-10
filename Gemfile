@@ -25,4 +25,5 @@ gem 'dalli'
 
 group :development do
   gem 'foreman'
+  gem 'byebug'
 end
