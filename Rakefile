@@ -39,28 +39,6 @@ namespace :db do
     %x( createdb -E UTF8 -T template0 #{@dbconfig[@environment]["database"]} )
   end
 
-  desc "calculate score avg for firs VS non firs for every hole"
-  task :avg do
-    ActiveRecord::Base.logger = nil
-    cards = Scorecard.played_between('2013-01-01', Date.today.to_s).where(course: 'Nynäshamns Golfklubb - Dal-Sjö')
-    scores = Score.find(cards.map(&:scores)).select{|s| s.par != 3 }
-    scores.map(&:hole).uniq.each do |hole|
-      hole_scores = scores.select{|s| s.hole == hole}
-      unless hole_scores.empty?
-        score = hole_scores.first
-        puts "################## HÅL #{score.hole} IS A PAR #{score.par} ##################"
-
-        firs     = hole_scores.select{|s| s.fir? }
-        non_firs = hole_scores.select{|s| !s.fir? }
-
-        firs_avg     = firs.map { |x| x.strokes.to_f }.inject(:+) / firs.length
-        non_firs_avg = non_firs.map { |x| x.strokes.to_f }.inject(:+) / non_firs.length
-
-        puts (firs_avg - non_firs_avg).round(1)
-
-      end
-    end
-  end
 
   desc "Imports scorecards from golfshot.com"
   task :import do
@@ -247,7 +225,16 @@ def parse_page(doc, round_url, round_id)
   scorecard.consistency = score_objects.map(&:strokes_over_par)
   scorecard.distance    = score_objects.sum(&:distance)
 
-  #scorecard.scrambling_percentage = ((scramblings.to_f/missed_greens.to_f)*100)
+  pga = (score_objects.select{|s| s.gir?}.inject(0){|sum,x| sum+x.putts}.to_f / scorecard.girs).round(2)
+  scorecard.putts_gir_avg = pga.nan? ? 0 : pga
+
+  scorecard.scoring_distribution = [
+    (( score_objects.select{|s| s.strokes_over_par == -2 }.size / score_objects.size.to_f) * 100).round(0),
+    (( score_objects.select{|s| s.strokes_over_par == -1 }.size / score_objects.size.to_f) * 100).round(0),
+    (( score_objects.select{|s| s.strokes_over_par == 0  }.size / score_objects.size.to_f) * 100).round(0),
+    (( score_objects.select{|s| s.strokes_over_par == 1  }.size / score_objects.size.to_f) * 100).round(0),
+    (( score_objects.select{|s| s.strokes_over_par > 1   }.size / score_objects.size.to_f) * 100).round(0)
+  ]
 
   scorecard.scores = score_objects.map(&:id)
 
