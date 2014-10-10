@@ -8,8 +8,6 @@ Dir["backend/models/*.rb"].each do |file|
  require "./#{file}"
 end
 
-#require 'debugger' if ENV['RACK_ENV'] == "development"
-
 @environment = ENV['RACK_ENV'] || 'development'
 @dbconfig = YAML.load(File.read('backend/database.yml'))
 ActiveRecord::Base.establish_connection @dbconfig[@environment]
@@ -17,20 +15,7 @@ ActiveRecord::Base.logger = Logger.new(STDOUT)
 #, :username => "youruser", :password => "yourpassword"  )
 
 
-# #old formatter, for now! see: http://code.dblock.org/grape-040-released-w-stricter-json-format-support-more
-# module Grape
-#   module Formatter
-#     module Json
-#       class << self
-#         def call(object, env)
-#           return object if ! object || object.is_a?(String)
-#           return object.to_json if object.respond_to?(:to_json)
-#           raise Grape::Exceptions::InvalidFormatter.new(object.class, 'json')
-#         end
-#       end
-#     end
-#   end
-# end
+require 'byebug' if @environment == "development"
 
 class Cache
   def initialize
