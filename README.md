@@ -1,6 +1,6 @@
 # Golfstats
 
-This README outlines the details of collaborating on this application.
+A simple Grape API and a javascript frontend to show off some of my golfstats.
 
 ## Installation
 
@@ -16,3 +16,4 @@ This README outlines the details of collaborating on this application.
 TODO:
 * Filter by last 5,10,20,30, course, month
 * Compare filter agains another filter
+* Show first9 vs last9
