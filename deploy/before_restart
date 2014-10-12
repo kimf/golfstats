@@ -10,7 +10,7 @@ use_bundler = File.file? 'Gemfile'
 rake_cmd    = use_bundler ? 'bundle exec rake' : 'rake'
 
 #copy database.yml
-run "cp /var/www/_shared/golfstats_database.yml config/database.yml"
+run "cp /var/www/_shared/golfstats_database.yml database.yml"
 
 if use_bundler
   bundler_args = ['--deployment']
