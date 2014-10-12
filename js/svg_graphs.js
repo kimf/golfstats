@@ -1,10 +1,11 @@
+//Super simple convenience function for jquery
 jQuery.fn.smallDonut = function(value_array, size) {
   return this.each(function() {
     $(this).append(donutChart(value_array, size));
   });
 };
 
-
+/* Create a donutChart, todo: get colors from data attributes */
 function donutChart(values, size) {
   svgns = "http://www.w3.org/2000/svg";
   chart = document.createElementNS(svgns, "svg:svg");
@@ -17,8 +18,6 @@ function donutChart(values, size) {
   } else {
     colors = [eagle_color, birdie_color, par_color, bogey_color, double_color];
   }
-
-
 
   var centerX = size/2,
       centerY = size/2,

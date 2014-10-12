@@ -1,3 +1,5 @@
+/* Handlebars helpers */
+
 Handlebars.registerHelper('shortDate', function(date) {
   return moment(date).format('Do MMMM YYYY');
 });
@@ -29,18 +31,3 @@ Handlebars.registerHelper('green_or_red', function(value, green_value, orange_va
   }
   return new Handlebars.SafeString ('<span style="color: '+color+';">'+value+'</span>');
 });
-
-
-
-function getUrlParameter(sParam){
-    var sPageURL = window.location.search.substring(1);
-    var sURLVariables = sPageURL.split('&');
-    for (var i = 0; i < sURLVariables.length; i++)
-    {
-        var sParameterName = sURLVariables[i].split('=');
-        if (sParameterName[0] == sParam)
-        {
-            return sParameterName[1];
-        }
-    }
-}

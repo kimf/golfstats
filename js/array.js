@@ -1,3 +1,5 @@
+/* Functions to work with arrays more easily */
+
 Array.maxProp = function (array, prop) {
   var values = array.map(function (el) {
     return el[prop];

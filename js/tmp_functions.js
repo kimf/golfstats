@@ -1,4 +1,6 @@
-//TODO, USE CSS INSTEAD!
+/* Very temporary functions for quicker development,
+   Fix these to use css and data attributes instead */
+
 var eagle_color = '#d8c32a',
     birdie_color = '#d83a29',
     par_color = '#2ecc71',

@@ -1,8 +1,5 @@
 //Move to app namespace?
-var year = getUrlParameter('year');
-if(typeof year === "undefined"){ year = "All"; }
 $.ajaxSetup({ cache: true });
-
 var scorecard_template  = Handlebars.compile($("#scorecard-template").html());
 var barchart_template   = Handlebars.compile($("#barchart-template").html());
 var summaries_template  = Handlebars.compile($("#summaries-template").html());
@@ -13,14 +10,15 @@ var app = {
     document.addEventListener('DOMContentLoaded', this.onDeviceReady, false);
   },
 
+  year: '',
+
   onDeviceReady: function() {
-    app.setActiveYear(year);
+    app.setActiveYear();
 
     $('.nav-tabs li a').click(function(e){
       e.preventDefault();
-      year = $(this).attr('href').split('=')[1];
       $('#scorecards li').remove();
-      app.setActiveYear(year);
+      app.setActiveYear( $(this).attr('href').split('=')[1] );
     });
 
     $('#strokes_over_par_bar').on('mouseenter', 'li', function(){
@@ -34,14 +32,31 @@ var app = {
     });
   },
 
-  setActiveYear: function(year){
-    $('.nav-tabs li').removeClass('active');
-    $('a[href*="'+year+'"]').addClass('active');
-    app.getScorecards(year);
+  getUrlParameter: function(sParam){
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+      var sParameterName = sURLVariables[i].split('=');
+      if (sParameterName[0] == sParam)
+      {
+        return sParameterName[1];
+      }
+    }
   },
 
-  getScorecards: function(year) {
-    $.getJSON('http://localhost:9292/scorecards?year='+year, function(data){
+  setActiveYear: function(year){
+    if(app.year == ''){
+      app.year = app.getUrlParameter('year');
+      if(typeof app.year === "undefined"){ app.year = "All"; }
+    }
+    $('.nav-tabs li').removeClass('active');
+    $('a[href*="'+year+'"]').addClass('active');
+    app.getScorecards();
+  },
+
+  getScorecards: function() {
+    $.getJSON('http://localhost:9292/scorecards?year='+app.year, function(data){
       $.each( data, function( key, val ) {
         app.createCharts(val);
         app.setupSummaries(val);

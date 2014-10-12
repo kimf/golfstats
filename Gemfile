@@ -25,10 +25,18 @@ gem 'dalli'
 
 
 group :development do
+  gem 'therubyracer'
+  gem 'rb-fsevent'
   gem 'guard'
+  gem 'uglifier'
+
   #gem 'guard-sass'
+  gem 'guard-concat'
+  gem 'guard-process'
+  gem 'guard-uglify'
   gem 'guard-livereload'
   gem 'rack-livereload'
+
   gem 'foreman'
   gem 'byebug'
 end
