@@ -52,6 +52,10 @@ GEM
       dotenv (~> 0.11.1)
       thor (~> 0.19.1)
     formatador (0.2.5)
+    git-deploy (0.5.4)
+      net-scp
+      net-ssh
+      thor
     grape (0.9.0)
       activesupport
       builder
@@ -98,6 +102,9 @@ GEM
     minitest (5.4.2)
     multi_json (1.10.1)
     multi_xml (0.5.5)
+    net-scp (1.2.1)
+      net-ssh (>= 2.6.5)
+    net-ssh (2.9.1)
     nokogiri (1.6.3.1)
       mini_portile (= 0.6.0)
     oj (2.10.3)
@@ -180,6 +187,7 @@ DEPENDENCIES
   byebug
   dalli
   foreman
+  git-deploy
   grape
   guard
   guard-concat

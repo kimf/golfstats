@@ -25,6 +25,8 @@ gem 'dalli'
 
 
 group :development do
+  gem 'git-deploy'
+
   gem 'therubyracer'
   gem 'rb-fsevent'
   gem 'guard'

@@ -5,12 +5,12 @@ def run(cmd)
   exit($?.exitstatus) unless system "umask 002 && #{cmd}"
 end
 
-RAILS_ENV   = ENV['RAILS_ENV'] || 'production'
+RACK_ENV   = ENV['RACK_ENV'] || 'production'
 use_bundler = File.file? 'Gemfile'
 rake_cmd    = use_bundler ? 'bundle exec rake' : 'rake'
 
 #copy database.yml
-run "cp ~/database.yml ./database.yml"
+run "cp /var/www/_shared/golfstats_database.yml config/database.yml"
 
 if use_bundler
   bundler_args = ['--deployment']
