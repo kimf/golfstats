@@ -4,15 +4,16 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 require 'open-uri'
-require 'byebug'
 
+#require 'byebug'
 
-Dir["./backend/models/*.rb"].each do |file|
+Dir["./models/*.rb"].each do |file|
  require "./#{file}"
 end
 
 @environment = ENV['RACK_ENV'] || 'development'
-@dbconfig = YAML.load(File.read('backend/database.yml'))
+
+@dbconfig = YAML.load(File.read('database.yml'))
 ActiveRecord::Base.establish_connection @dbconfig[@environment]
 ActiveRecord::Base.logger = Logger.new(STDOUT)
 
@@ -24,7 +25,7 @@ namespace :db do
   desc "do migrations"
   task :migrate do
     ActiveRecord::Migration.verbose = true
-    ActiveRecord::Migrator.migrate "backend/db/migrate", ENV['VERSION'] ? ENV['VERSION'].to_i : nil
+    ActiveRecord::Migrator.migrate "db/migrate", ENV['VERSION'] ? ENV['VERSION'].to_i : nil
   end
 
   desc "drop db"
