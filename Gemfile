@@ -1,4 +1,4 @@
-#ruby '2.1.2'
+ruby '2.1.1'
 source "https://rubygems.org"
 
 gem 'rake', '10.3.2'
