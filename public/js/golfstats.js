@@ -6139,7 +6139,6 @@ function donutChart(values, size) {
   }
   return chart;
 }
-//Move to app namespace?
 $.ajaxSetup({ cache: true });
 var scorecard_template  = Handlebars.compile($("#scorecard-template").html());
 var barchart_template   = Handlebars.compile($("#barchart-template").html());
@@ -6149,9 +6148,11 @@ var app = {
   // Application Constructor
   initialize: function() {
     document.addEventListener('DOMContentLoaded', this.onDeviceReady, false);
+    app.getHostname();
   },
 
   year: '',
+  apiurl: '',
 
   onDeviceReady: function() {
     app.setActiveYear();
@@ -6186,6 +6187,13 @@ var app = {
     }
   },
 
+  getHostname: function(href) {
+    var l = document.createElement("a");
+    l.href = href;
+    app.apiurl = l.host;
+    return app.apiurl;
+  },
+
   setActiveYear: function(year){
     if(app.year == ''){
       app.year = app.getUrlParameter('year');
@@ -6197,7 +6205,7 @@ var app = {
   },
 
   getScorecards: function() {
-    $.getJSON('http://localhost:9292/scorecards?year='+app.year, function(data){
+    $.getJSON('http://'+app.apiurl+'/scorecards?year='+app.year, function(data){
       $.each( data, function( key, val ) {
         app.createCharts(val);
         app.setupSummaries(val);
