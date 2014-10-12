@@ -201,7 +201,7 @@ DEPENDENCIES
   rack-contrib
   rack-cors
   rack-livereload
-  rake
+  rake (= 10.3.2)
   rb-fsevent
   therubyracer
   thin
