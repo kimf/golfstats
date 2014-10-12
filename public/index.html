@@ -32,50 +32,64 @@
   </div>
 
 
-  <div class="container-fluid">
+  <div class="container">
+    <ul id="summaries"></ul>
+
+    <ul class="barchart" id="strokes_over_par_bar"></ul>
 
     <ul id="scorecards" class="list-group">
     </ul>
   </div>
 
+  <script id="summaries-template" type="text/x-handlebars-template">
+    <li class="summary-item">
+      <small>{{what}}</small>
+      {{value}}
+    </li>
+  </script>
+
+  <script id="barchart-template" type="text/x-handlebars-template">
+    <li data-rel="scorecard_{{id}}" style="border-top-width: {{border_top}}px; width: {{width}}px; border-right-width: {{bargap}}px; background: {{score_color}}">
+      <span>{{value}}</span>
+    </li>
+  </script>
+
 
   <script id="scorecard-template" type="text/x-handlebars-template">
-    <li class="list-group-item notanimate" data-name="{{name}}">
+    <li class="list-group-item notanimate" data-id="scorecard_{{id}}">
       <div class="header">
         <small class="pull-left">{{truncate course 50}}</small>
         <small class="pull-right">{{shortDate date}}</small>
       </div>
 
-      <div class="wrapper strokes">{{strokes}}</div>
+      <div class="wrapper strokes">{{green_or_red strokes 80 85}}</div>
 
       <div class="wrapper score_sum">
-        <small></small>
-        {{donutChart scoring_distribution 30}}
+        <small>SCORING</small>
+        <span class="smallDonut"></span>
         <span class="strokes_over_par">+{{strokes_over_par}}</span>
       </div>
 
       <div class="wrapper gir">
         <small>GIR</small>
-        {{pieChart girs scores_count 20}}
+        <small class="smallPie"></small>
         {{percentage girs scores_count}}
       </div>
 
       <div class="wrapper fir">
         <small>FIR</small>
-        {{pieChart firs not_par_three_holes 20}}
+        <small class="smallPie"></small>
         {{percentage firs not_par_three_holes}}
       </div>
 
       <div class="wrapper putts">
         <small>PUTTS</small>
-        <div class="total_putts inside">{{green_or_red putts 25 30}}</div>
+        <div class="total_putts">{{green_or_red putts 25 30}}</div>
         {{green_or_red putts_avg 1.7 1.8}} / {{green_or_red putts_gir_avg 1.8 1.9}}
       </div>
 
-      <div class="strokebar">
-        <span class="parbar"></span>
-        {{strokebar consistency}}
-      </div>
+      <ul class="barchart" id="strokebar">
+      </ul>
     </li>
   </script>
 
@@ -84,6 +98,10 @@
   <script src="js/handlebars-v2.0.0.js"></script>
   <script src="js/moment.js"></script>
   <!-- <script src="js/impulse.js"></script> -->
+  <script src="js/array.js"></script>
+  <script src="js/tmp_functions.js"></script>
+  <script src="js/helpers.js"></script>
+  <script src="js/svg_graphs.js"></script>
   <script src="js/index.js"></script>
 
   <script type="text/javascript">

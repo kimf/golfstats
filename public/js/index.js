@@ -1,42 +1,20 @@
-var eagle_color = '#d8c32a',
-    birdie_color = '#d83a29',
-    par_color = '#2ecc71',
-    bogey_color = '#999',
-    double_color = '#555';
-
-var color_by_strokes = {
-  '-2':  eagle_color,
-  '-1':  birdie_color,
-  '0':  par_color,
-  '1':  bogey_color,
-  '2':  double_color
-}
-
+//Move to app namespace?
 var year = getUrlParameter('year');
-
-$.ajaxSetup({ cache: false });
-
 if(typeof year === "undefined"){ year = "All"; }
+$.ajaxSetup({ cache: true });
 
-var scorecard_template = Handlebars.compile($("#scorecard-template").html());
+var scorecard_template  = Handlebars.compile($("#scorecard-template").html());
+var barchart_template   = Handlebars.compile($("#barchart-template").html());
+var summaries_template  = Handlebars.compile($("#summaries-template").html());
 
 var app = {
   // Application Constructor
   initialize: function() {
-    this.bindEvents();
+    document.addEventListener('DOMContentLoaded', this.onDeviceReady, false);
   },
 
-
-  bindEvents: function() {
-    document.addEventListener('DOMContentLoaded', this.onDeviceReady, false);
-
-    $( "#scorecards" ).on( "addedToScreen", function( event ) {
-      $(this).find(".smallpie:not(:has(*))").smallPie();
-      $(this).find(".smalldonut:not(:has(*))").smallDonut();
-      // $(this).trigger( 'liAddedToScreen' );
-    });
-
-    // $( "#scorecards" ).on( "liAddedToScreen", function( event ) { });
+  onDeviceReady: function() {
+    app.setActiveYear(year);
 
     $('.nav-tabs li a').click(function(e){
       e.preventDefault();
@@ -44,11 +22,16 @@ var app = {
       $('#scorecards li').remove();
       app.setActiveYear(year);
     });
-  },
 
-  onDeviceReady: function() {
-    app.setActiveYear(year);
-    app.createCharts();
+    $('#strokes_over_par_bar').on('mouseenter', 'li', function(){
+      $('.barchart li').removeClass('active');
+      $("#scorecards > li").hide();
+
+      $li = $(this);
+      $li.addClass('active');
+
+      $("#scorecards li[data-id='"+$li.data('rel')+"']").show();
+    });
   },
 
   setActiveYear: function(year){
@@ -60,6 +43,8 @@ var app = {
   getScorecards: function(year) {
     $.getJSON('http://localhost:9292/scorecards?year='+year, function(data){
       $.each( data, function( key, val ) {
+        app.createCharts(val);
+        app.setupSummaries(val);
         $.each( val, function( key, val ) {
           app.addScorecardToList(val);
         });
@@ -69,215 +54,95 @@ var app = {
 
   addScorecardToList: function(scorecard) {
     $("#scorecards").prepend( scorecard_template(scorecard) );
-    $('#scorecards').trigger('addedToScreen');
+    app.setupScorecardGraphs(scorecard);
   },
-};
+
+  setupScorecardGraphs: function(scorecard){
+    var id = scorecard.id;
+    $list = $('li[data-id="scorecard_'+id+'"]');
+
+    $list.find(".smallDonut").smallDonut(scorecard.scoring_distribution, 100);
+
+    gir_percentage = parseFloat((scorecard.girs/scorecard.scores_count)*100).toFixed(0);
+    $list.find(".gir .smallPie").smallDonut([gir_percentage, (100-gir_percentage)], 100);
+
+    fir_percentage = parseFloat((scorecard.firs/scorecard.not_par_three_holes)*100).toFixed(0);
+    $list.find(".fir .smallPie").smallDonut([fir_percentage, (100-fir_percentage)], 100);
 
 
-Handlebars.registerHelper('shortDate', function(date) {
-  return moment(date).format('Do MMMM YYYY');
-});
+    var consistency = scorecard.consistency;
+    var width  = $list.width();
+    var bargap = 1;
+    var all = consistency.length;
+    var barwidth = Math.floor((width-bargap)/(all));
 
-Handlebars.registerHelper('strokebar', function(strokes) {
-  string = '';
+    function createStrokeBar(element, index, array) {
+      border_top = get_border_top_by_stroke(element);
+      color = get_color_by_stroke(element);
+      name  = get_name_by_stroke(element);
 
-  function createStrokeBar(element, index, array) {
-    barHeight = (parseInt(element)*-6);
-    // color = color_by_strokes[element];
-    // if(typeof color === "undefined"){ color = "#000"; }
-    string = string + '<span class="bar" style="margin-top: '+barHeight+'px;"></span>';
-  };
+      data = {score_color: color, value: name, border_top: border_top, width: barwidth, bargap: bargap, color: color}
+      // html += barchart_template(data);
+      $list.find('#strokebar').append( barchart_template(data) );
+    };
+    consistency.forEach(createStrokeBar);
 
-  strokes.forEach(createStrokeBar);
+  },
 
-  return new Handlebars.SafeString(string);
-});
+  createCharts: function(raw_scorecards){
+    var $el = $('#strokes_over_par_bar')
 
-Handlebars.registerHelper ('truncate', function (str, len) {
-  if (str.length > len && str.length > 0) {
-    var new_str = str + " ";
-    new_str = str.substr (0, len);
-    new_str = str.substr (0, new_str.lastIndexOf(" "));
-    new_str = (new_str.length > 0) ? new_str : str.substr (0, len);
+    var height = $el.height();
+    var width  = $el.width();
+    var bargap = 1;
 
-    return new Handlebars.SafeString ( new_str +'...' );
-  }
-  return str;
-});
+    var maxvalue = Array.maxProp(raw_scorecards, 'strokes')+10;
+    var factor = height/maxvalue;
+    var all = raw_scorecards.length;
+    var barwidth = Math.floor((width-bargap)/(all));
 
-Handlebars.registerHelper('donutChart', function(values, size){
-  html = '<div class="inside"><span class="smalldonut" data-values="'+values+'" data-size="'+size+'"></span></div>';
-  return new Handlebars.SafeString (html);
-});
+    last_id = 0;
+    $.each( raw_scorecards, function( key, val ) {
+      var value = val.strokes;
+      border_top = Math.floor(height-(value*factor));
 
-Handlebars.registerHelper('pieChart', function(percentage, of, size){
-  percentage = parseFloat((percentage/of)*100).toFixed(0);
-  html = '<div class="inside"><span class="smallpie" data-percentage="'+percentage+'" data-size="'+size+'"></span></div>';
-  return new Handlebars.SafeString (html);
-});
+      data = { id: val.id, value: value, border_top: border_top, width: barwidth, bargap: bargap}
+      last_id = val.id;
+      $el.append( barchart_template(data) );
+    });
 
-Handlebars.registerHelper('percentage', function(size, of){
-  percentage = parseFloat((size/of)*100).toFixed(0);
-  return new Handlebars.SafeString (percentage+'%');
-});
+    $('li[data-rel="scorecard_'+last_id+'"]').addClass('active');
+  },
 
-Handlebars.registerHelper('green_or_red', function(value, green_value, orange_value){
-  if(value <= green_value){
-    color = par_color;
-  } else if(value <= orange_value) {
-    color = eagle_color;
-  } else {
-    color = birdie_color;
-  }
-  return new Handlebars.SafeString ('<span style="color: '+color+';">'+value+'</span>');
-});
+  setupSummaries: function(raw_scorecards){
+    var $el = $('#summaries');
+    rounds    = raw_scorecards.length;
+    avg_score = Array.avgProp(raw_scorecards, 'strokes');
+    gir_avg   = parseFloat(((Array.sumProp(raw_scorecards, 'girs')/ Array.sumProp(raw_scorecards, 'scores_count')) * 100).toFixed(1));
+    fir_avg   = parseFloat(((Array.sumProp(raw_scorecards, 'firs')/ Array.sumProp(raw_scorecards, 'not_par_three_holes')) * 100).toFixed(1));
+    avg_putts = parseFloat((Array.sumProp(raw_scorecards, 'putts')/ Array.sumProp(raw_scorecards, 'scores_count')).toFixed(2));
+    avg_putts = parseFloat((Array.sumProp(raw_scorecards, 'putts')/ Array.sumProp(raw_scorecards, 'scores_count')).toFixed(2));
 
-jQuery.fn.smallPie = function() {
-  return this.each(function() {
-    p = $(this).data('percentage');
-    s = $(this).data('size');
-    c = $(this).data('color');
-    $(this).append(pieChart(p, s, c));
-  });
-};
-
-jQuery.fn.smallDonut = function() {
-  return this.each(function() {
-    v = $(this).data('values').split(',');
-    s = $(this).data('size');
-    c = $(this).data('color');
-    $(this).append(donutChart(v, s, c));
-  });
-};
-
-
-function donutChart(values, size) {
-  svgns = "http://www.w3.org/2000/svg";
-  chart = document.createElementNS(svgns, "svg:svg");
-  chart.setAttribute("width", size);
-  chart.setAttribute("height", size);
-  chart.setAttribute("viewBox", "0 0 " + size + " " + size);
-
-  colors = [eagle_color, birdie_color, par_color, bogey_color, double_color];
-
-
-  var centerX = size/2,
-      centerY = size/2,
-      cos = Math.cos,
-      sin = Math.sin,
-      PI = Math.PI;
-
-  doughnutRadius = Math.min.apply(null, ([size/2,size/2])),
-  cutoutRadius = doughnutRadius / 2;
-
-  var startRadius = -Math.PI/2;//-90 degree
-  for (var i = 0, len = values.length; i < len; i++){
-    // primary wedge
-    path = document.createElementNS(svgns, "path");
-    value = parseInt(values[i]);
-
-    var segmentAngle = (value/100) * (PI*2),
-      endRadius = startRadius + segmentAngle,
-      largeArc = ((endRadius - startRadius) % (PI * 2)) > PI ? 1 : 0,
-      startX = centerX + cos(startRadius) * doughnutRadius,
-      startY = centerY + sin(startRadius) * doughnutRadius,
-      endX2 = centerX + cos(startRadius) * cutoutRadius,
-      endY2 = centerY + sin(startRadius) * cutoutRadius,
-      endX = centerX + cos(endRadius) * doughnutRadius,
-      endY = centerY + sin(endRadius) * doughnutRadius,
-      startX2 = centerX + cos(endRadius) * cutoutRadius,
-      startY2 = centerY + sin(endRadius) * cutoutRadius;
-
-    var cmd = [
-      'M', startX, startY,//Move pointer
-      'A', doughnutRadius, doughnutRadius, 0, largeArc, 1, endX, endY,//Draw outer arc path
-      'L', startX2, startY2,//Draw line path(this line connects outer and innner arc paths)
-      'A', cutoutRadius, cutoutRadius, 0, largeArc, 0, endX2, endY2,//Draw inner arc path
-      'Z'//Cloth path
-    ];
-
-    path.setAttribute("d", cmd.join(' ')); // Set this path
-    path.setAttribute("fill", colors[i]);
-    chart.appendChild(path); // Add wedge to chart
-
-    startRadius += segmentAngle;
-  }
-  // // foreground circle
-  // var front = document.createElementNS(svgns, "circle");
-  // front.setAttributeNS(null, "cx", (size / 2));
-  // front.setAttributeNS(null, "cy", (size / 2));
-  // front.setAttributeNS(null, "r",  (size * 0.17)); //about 34% as big as back circle
-  // front.setAttributeNS(null, "fill", "#ecf0f1");
-  // chart.appendChild(front);
-  return chart;
-}
-
-
-function pieChart(percentage, size) {
-    var svgns = "http://www.w3.org/2000/svg";
-    var chart = document.createElementNS(svgns, "svg:svg");
-    chart.setAttribute("width", size);
-    chart.setAttribute("height", size);
-    chart.setAttribute("viewBox", "0 0 " + size + " " + size);
-    // Background circle
-    var back = document.createElementNS(svgns, "circle");
-    back.setAttributeNS(null, "cx", size / 2);
-    back.setAttributeNS(null, "cy", size / 2);
-    back.setAttributeNS(null, "r",  size / 2);
-    back.setAttributeNS(null, "fill", "#ccc");
-    back.setAttributeNS(null, "fill-opacity", "0.5");
-    chart.appendChild(back);
-    // primary wedge
-    var path = document.createElementNS(svgns, "path");
-    var unit = (Math.PI *2) / 100;
-    var startangle = 0;
-    var endangle = percentage * unit - 0.001;
-    var x1 = (size / 2) + (size / 2) * Math.sin(startangle);
-    var y1 = (size / 2) - (size / 2) * Math.cos(startangle);
-    var x2 = (size / 2) + (size / 2) * Math.sin(endangle);
-    var y2 = (size / 2) - (size / 2) * Math.cos(endangle);
-    var big = 0;
-    if (endangle - startangle > Math.PI) {
-        big = 1;
-    }
-    var d = "M " + (size / 2) + "," + (size / 2) +  // Start at circle center
-        " L " + x1 + "," + y1 +     // Draw line to (x1,y1)
-        " A " + (size / 2) + "," + (size / 2) +       // Draw an arc of radius r
-        " 0 " + big + " 1 " +       // Arc details...
-        x2 + "," + y2 +             // Arc goes to to (x2,y2)
-        " Z";                       // Close path back to (cx,cy)
-    path.setAttribute("d", d); // Set this path
-
-    if(percentage > 70){
-      col = par_color;
-    } else if (percentage > 50) {
-      col = eagle_color;
-    } else {
-      col = birdie_color;
+    //TEMPORARY PLAY DATA
+    aggregated_data = {
+      'ROUNDS': rounds,
+      'AVG. SCORE': avg_score,
+      'GIR': gir_avg+'%',
+      'FIR': fir_avg+'%',
+      'AVG. PUTTS': avg_putts,
+      'AVG. GIR PUTTS': 4.52,
+      // scoring_distribution_avg: [0, 6, 56, 34, 4],
+      // par_3: 3.6,
+      // par_4: 4.2,
+      // par_5: 5.5,
+      // scrambling: 24,
+      // sand_saves: 45
     }
 
-    path.setAttribute("fill", col);
-    chart.appendChild(path); // Add wedge to chart
-    // // foreground circle
-    // var front = document.createElementNS(svgns, "circle");
-    // front.setAttributeNS(null, "cx", (size / 2));
-    // front.setAttributeNS(null, "cy", (size / 2));
-    // front.setAttributeNS(null, "r",  (size * 0.17)); //about 34% as big as back circle
-    // front.setAttributeNS(null, "fill", "#ecf0f1");
-    // chart.appendChild(front);
-    return chart;
-}
 
-function getUrlParameter(sParam)
-{
-    var sPageURL = window.location.search.substring(1);
-    var sURLVariables = sPageURL.split('&');
-    for (var i = 0; i < sURLVariables.length; i++)
-    {
-        var sParameterName = sURLVariables[i].split('=');
-        if (sParameterName[0] == sParam)
-        {
-            return sParameterName[1];
-        }
-    }
-}
+    $.each( aggregated_data, function( key, val ) {
+      data = { what: key, value: val }
+      $el.append( summaries_template(data) );
+    });
+  }
+};

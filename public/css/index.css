@@ -3,16 +3,23 @@ body {
 }
 
 
+
+
 .list-group-item{
-  height: 130px;
-  font-size: 10px;
+  height: 300px;
   margin-bottom: 10px;
   padding: 10px;
   border: 0;
   background: #ecf0f1;
   position: relative;
   overflow: hidden;
+  display: none;
 }
+
+#scorecards li:first-child{
+  display: block;
+}
+
 
 .list-group-item .header{
   float: left;
@@ -21,8 +28,7 @@ body {
 
 .list-group-item small{
   color: #656567;
-  font-size: 10px;
-  line-height: 10px;
+  font-size: 0.9em;
 }
 
 .list-group-item div.wrapper{
@@ -31,7 +37,9 @@ body {
   float: left;
   width: 20%;
   display: block;
-  padding-top: 10px;
+  padding-top: 20px;
+  position: relative;
+  z-index: 100;
 }
 
 .list-group-item div.wrapper .inside{
@@ -53,7 +61,7 @@ body {
 .list-group-item div.wrapper.strokes{
   width: 100px;
   color: #2ecc71;
-  font-size: 50px;
+  font-size: 62px;
   position: relative;
   z-index: 10;
   font-family: 'Futura';
@@ -73,14 +81,6 @@ body {
   font-family: 'Futura';
   font-size: 16px;
   height: 25px;
-}
-
-.list-group-item .wrapper .smallpie{
-  display: inline-block;
-  width: 25px;
-  height: 25px;
-  border-radius: 25px;
-  clear: both;
 }
 
 .list-group-item div.wrapper small{
@@ -104,33 +104,110 @@ body {
   border-bottom-left-radius: 0px !important;
 }
 
-.strokebar {
-  width: 100%;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 10px;
-  z-index: 9;
-}
-
-.strokebar .parbar{
-  float: left;
-  height: 10px;
-  width: 100%;
-  border-top: 1px dashed #cad0d2;
-/*  opacity: 0.2;
-  background: #ecf0f1;*/
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.strokebar .bar{
-  height: 50px;
-  float: left;
-  width: 5.5555%;
-  background: #dee3e5;
-}
-
 .navbar .btn-group {
   margin: 10px 10px 0 0;
+}
+
+
+.barchart {
+  margin:0;
+  padding:0;
+  background:#fff;
+  min-height:100px;
+  width:100%;
+  list-style:none;
+  overflow:hidden;
+  position:relative;
+}
+
+
+.barchart li{
+  min-width:18px;
+  float:left;
+  display:block;
+  background:#eee;
+  height:inherit;
+  margin:0;
+  padding:0;
+  border:1px solid #fff;
+  border-right-width:0;
+  border-left:none;
+  border-bottom:none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.barchart li:hover, .barchart li.active{
+  background:#4aa2bf;
+  border-color:#fff;
+}
+
+
+.barchart li span{
+  color: #999;
+  opacity: 0.2;
+}
+
+
+.barchart li:hover span, .barchart li.active span{
+  opacity: 1;
+  color: #fff;
+}
+
+
+#strokes_over_par_bar{
+  float: left;
+  height: 100px;
+  margin-bottom: 20px;
+}
+
+#strokebar{
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  background: none;
+  height: 200px;
+  z-index: 0;
+}
+
+#strokebar li {
+  border:1px solid #ecf0f1;
+  background: rgba(255,255,255, 0);
+  opacity: 0.5;
+}
+
+#strokebar li span{
+  color: #fff;
+}
+
+#summaries {
+  float: left;
+  width: 100%;
+  margin: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#summaries li {
+  float: left;
+  list-style: none;
+  font-size: 32px;
+  color: #444;
+  font-family: 'Futura';
+  width: 150px;
+  border-right: 1px dashed #cecece;
+  padding: 0 20px;
+  text-align: right;
+}
+
+#summaries li:last-child {
+  border: 0;
+}
+
+#summaries li small{
+  color: #999;
+  font-family: 'PT Sans';
+  font-size: 10px;
+  float: left;
+  width: 100%;
+  text-align: right;
 }

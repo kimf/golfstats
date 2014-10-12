@@ -1,4 +1,5 @@
 class Scorecard < ActiveRecord::Base
+
   default_scope { order('date DESC') }
 
   attr_accessor :score_objects

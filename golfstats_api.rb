@@ -63,7 +63,7 @@ class GolfstatsApi < Grape::API
     year_string = params[:year] == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
 
     query = <<-SQL
-      SELECT * FROM scorecards WHERE scores_count = 18 #{year_string} LIMIT 25
+      SELECT * FROM scorecards WHERE scores_count = 18 #{year_string} ORDER BY date ASC
     SQL
 
     #@scorecards = cache.get("scorecards_#{year}_json") || nil
