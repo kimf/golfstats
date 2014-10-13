@@ -17,3 +17,5 @@ TODO:
 * Filter by last 5,10,20,30, course, month
 * Compare filter agains another filter
 * Show first9 vs last9
+* Delete json cache (and maybe repopulate) for that year + all when new sccorecard(s) are imported
+*

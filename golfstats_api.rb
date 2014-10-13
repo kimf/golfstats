@@ -66,7 +66,7 @@ class GolfstatsApi < Grape::API
       SELECT * FROM scorecards WHERE scores_count = 18 #{year_string} ORDER BY date ASC
     SQL
 
-    #@scorecards = cache.get("scorecards_#{year}_json") || nil
+    @scorecards = cache.get("scorecards_#{year}_json") || nil
     if @scorecards.nil?
       @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
       cache.set("scorecards_#{year}_json", @scorecards)
