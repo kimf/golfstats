@@ -23,6 +23,8 @@ gem 'nokogiri'
 gem 'typhoeus'
 gem 'dalli'
 
+gem 'newrelic_rpm'
+
 
 group :development do
   gem 'git-deploy', github: 'bkutil/git-deploy' #tmp until mislav updates thor dependency
