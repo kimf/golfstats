@@ -144,7 +144,6 @@ var app = {
     gir_avg   = parseFloat(((Array.sumProp(raw_scorecards, 'girs')/ Array.sumProp(raw_scorecards, 'scores_count')) * 100).toFixed(1));
     fir_avg   = parseFloat(((Array.sumProp(raw_scorecards, 'firs')/ Array.sumProp(raw_scorecards, 'not_par_three_holes')) * 100).toFixed(1));
     avg_putts = parseFloat((Array.sumProp(raw_scorecards, 'putts')/ Array.sumProp(raw_scorecards, 'scores_count')).toFixed(2));
-    avg_putts = parseFloat((Array.sumProp(raw_scorecards, 'putts')/ Array.sumProp(raw_scorecards, 'scores_count')).toFixed(2));
 
     //TEMPORARY PLAY DATA
     aggregated_data = {
@@ -153,7 +152,7 @@ var app = {
       'GIR': gir_avg+'%',
       'FIR': fir_avg+'%',
       'AVG. PUTTS': avg_putts,
-      'AVG. GIR PUTTS': 4.52,
+      'AVG. GIR PUTTS': 1.9,
       // scoring_distribution_avg: [0, 6, 56, 34, 4],
       // par_3: 3.6,
       // par_4: 4.2,

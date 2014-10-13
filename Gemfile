@@ -25,7 +25,7 @@ gem 'dalli'
 
 
 group :development do
-  gem 'git-deploy'
+  gem 'git-deploy', github: 'bkutil/git-deploy' #tmp until mislav updates thor dependency
 
   gem 'therubyracer'
   gem 'rb-fsevent'
@@ -38,7 +38,5 @@ group :development do
   gem 'guard-uglify'
   gem 'guard-livereload'
   gem 'rack-livereload'
-
-  gem 'foreman'
   gem 'byebug'
 end
