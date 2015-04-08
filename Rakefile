@@ -7,6 +7,14 @@ require 'open-uri'
 
 #require 'byebug'
 
+#KIM
+USER_ID=1
+GOLFSHOT_URL="http://golfshot.com/members/0192098630/rounds"
+#BOLLE
+# USER_ID=2
+# GOLFSHOT_URL="http://golfshot.com/members/0143076350/rounds"
+
+
 Dir["./models/*.rb"].each do |file|
  require "./#{file}"
 end
@@ -84,7 +92,7 @@ namespace :db do
     scorecards = []
 
     #First request does not need to be hydra
-    doc = Nokogiri::HTML(open("http://golfshot.com/members/0192098630/rounds"))
+    doc = Nokogiri::HTML(open(GOLFSHOT_URL))
 
     pages = doc.css("div#roundList .pagination ul a")
     pages.reverse.each do |page|
@@ -193,6 +201,8 @@ def parse_page(doc, round_url, round_id)
 
         score.up_and_down   =  score.gir ? nil : (score.putts == 1)
 
+        score.user_id ||= USER_ID
+
         if score.save
           score_objects << score
         end
@@ -238,6 +248,8 @@ def parse_page(doc, round_url, round_id)
   ]
 
   scorecard.scores = score_objects.map(&:id)
+
+  scorecard.user_id ||= USER_ID
 
   scorecard.save
 end
