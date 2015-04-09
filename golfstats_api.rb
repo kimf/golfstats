@@ -61,19 +61,22 @@ class GolfstatsApi < Grape::API
   get "/scorecards" do
     year = params[:year].nil? ? "All" : params[:year]
     year_string = params[:year] == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
+    user_id = params[:user_id].nil? ? 1 : params[:user_id]
 
     query = <<-SQL
-      SELECT * FROM scorecards WHERE scores_count = 18 #{year_string} ORDER BY date ASC
+      SELECT * FROM scorecards WHERE user_id = #{user_id} AND scores_count = 18 #{year_string} ORDER BY date ASC
     SQL
 
-    @scorecards = cache.get("scorecards_#{year}_json") || nil
+    @scorecards = cache.get("scorecards_#{year}_#{user_id}_json") || nil
     if @scorecards.nil?
       @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
-      cache.set("scorecards_#{year}_json", @scorecards)
+      cache.set("scorecards_#{year}_#{user_id}_json", @scorecards)
     end
 
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
+    if @environment != "development"
+      header 'Cache-Control', 'public, max-age=31536000'
+      header 'Expires', (Date.today + 1.year).httpdate
+    end
     @scorecards
   end
 
@@ -91,8 +94,10 @@ class GolfstatsApi < Grape::API
       cache.set("scorecards_#{ids.join('_')}_json", @scores)
     end
 
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
+    if @environment != "development"
+      header 'Cache-Control', 'public, max-age=31536000'
+      header 'Expires', (Date.today + 1.year).httpdate
+    end
     @scores
   end
 end
