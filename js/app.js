@@ -56,7 +56,7 @@ var app = {
   setActiveYear: function(year){
     if(app.year == ''){
       app.year = app.getUrlParameter('year');
-      if(typeof app.year === "undefined"){ app.year = "2014"; }
+      if(typeof app.year === "undefined"){ app.year = "2015"; }
     }
     $('.nav-tabs li').removeClass('active');
     $('a[href*="'+app.year+'"]').addClass('active');
