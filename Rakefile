@@ -5,7 +5,7 @@ require 'bundler/setup'
 Bundler.require(:default)
 require 'open-uri'
 
-#require 'byebug'
+require 'byebug'
 
 #KIM
 USER_ID=1
@@ -46,6 +46,61 @@ namespace :db do
   task :create do
     puts "creating #{@dbconfig[@environment]["database"]}"
     %x( createdb -E UTF8 -T template0 #{@dbconfig[@environment]["database"]} )
+  end
+
+  desc "Import courses from json files in _data"
+  task :courses do
+    Dir["_data/courses/*.json"].each do |file|
+      club = JSON.parse(File.read(file))
+
+      next if club["Data"]["Courses"].nil?
+
+      lat = club["MapLat"]
+      lng = club["MapLng"]
+
+      club_name = club["Name"]
+
+      club["Data"]["Courses"].each do |c|
+        name        = c["Name"]
+        holes_count = c["NumberOfHoles"]
+        par         = c["Par"]
+
+        course = Course.create(club: club_name, name: name, holes_count: holes_count, par: par, lat: lat, lng: lng)
+
+        slopes = []
+        c["Loop"]["Slopes"].each do |s|
+          course_rating = s["CourseRating"]
+          slope_value   = s["SlopeValue"]
+          male          = s["Gender"] == 1
+          name          = s["TeeColor"]
+
+          slopes << Slope.create(course: course, course_rating: course_rating, slope_value: slope_value, male: male, name: name)
+        end
+
+        c["Loop"]["Holes"].each do |h|
+          number            = h["Number"]
+          par               = h["Par"]
+          index             = h["Index"]
+          green_center_lat  = h["GreenCenterLatitude"]
+          green_center_lng  = h["GreenCenterLongitude"]
+          green_front_lat   = h["GreenFrontLatitude"]
+          green_front_lng   = h["GreenFrontLongitude"]
+          green_depth       = h["GrenDepth"]
+
+          hole = Hole.create(course: course, number: number, par: par, index: index, green_center_lat: green_center_lat, green_center_lng: green_center_lng, green_front_lat: green_front_lat, green_front_lng: green_front_lng, green_depth: green_depth)
+
+
+          h["Tees"].each do |t|
+            slope   = slopes.select{|s| s.name == t["Color"]}.first
+            length  = t["Length"]
+            lat     = t["TeeLatitude"]
+            lng     = t["TeeLongitude"]
+
+            tee = Tee.create(hole: hole, slope: slope, length: length, lat: lat, lng: lng)
+          end
+        end
+      end
+    end
   end
 
 

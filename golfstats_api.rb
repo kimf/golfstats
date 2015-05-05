@@ -60,7 +60,7 @@ class GolfstatsApi < Grape::API
   desc "Return scorecards updated after given date"
   get "/scorecards" do
     year = params[:year].nil? ? "All" : params[:year]
-    year_string = params[:year] == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
+    year_string = year == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
     user_id = params[:user_id].nil? ? 1 : params[:user_id]
 
     query = <<-SQL
@@ -100,4 +100,34 @@ class GolfstatsApi < Grape::API
     end
     @scores
   end
+
+  desc "Returns a list of all the courses"
+  get "/courses" do
+    courses = cache.get("courses_json") || nil
+
+    if courses.nil?
+      courses = {courses: Course.all}
+      cache.set("courses_json", courses)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    courses
+  end
+
+  desc "Returns data for one course"
+  get "/courses/:id" do
+    id = params[:id]
+
+    course = cache.get("courses_json_#{id}") || nil
+    if course.nil?
+      course = Course.find(params[:id])
+      cache.set("course_json_#{id}", course)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    course
+  end
+
 end
