@@ -5,6 +5,7 @@ frontend/dist
 frontend/tmp/*
 
 # dependencies
+frontend/bower_components
 frontend/node_modules
 frontend/vendor/*
 
