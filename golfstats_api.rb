@@ -52,6 +52,20 @@ class GolfstatsApi < Grape::API
       Cache.new
     end
 
+    def tee_json(tees)
+      tees_array = []
+      tees.each do |t|
+        tees_array << {
+          id: t.id,
+          length: t.length,
+          lat: t.lat,
+          lng: t.lng,
+          hole: t.hole
+        }
+      end
+      tees_array
+    end
+
     # def authenticate!
     #   error!('401 Unauthorized', 401) unless current_user
     # end
@@ -119,15 +133,51 @@ class GolfstatsApi < Grape::API
   get "/courses/:id" do
     id = params[:id]
 
-    course = cache.get("courses_json_#{id}") || nil
-    if course.nil?
-      course = Course.find(params[:id])
-      cache.set("course_json_#{id}", course)
+    course_json = cache.get("courses_json_#{id}") || nil
+    if course_json.nil?
+      course = Course.includes(:slopes).find(params[:id])
+      course_json = {
+        id: course.id,
+        name: course.name,
+        holes_count: course.holes_count,
+        par: course.par,
+        lat: course.lat,
+        lng: course.lng,
+        created_at: course.created_at,
+        updated_at: course.updated_at,
+        club: course.club,
+        slopes: course.slopes
+      }
+      cache.set("course_json_#{id}", course_json)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
     header 'Expires', (Date.today + 1.year).httpdate
-    course
+    course_json
+  end
+
+  desc "Returns data for one slope"
+  get "/slopes/:id" do
+    id = params[:id]
+
+    slope_json = cache.get("courses_json_#{id}") || nil
+    if slope_json.nil?
+      slope = Slope.includes(:course, tees:[:hole]).find(params[:id])
+      slope_json = {
+        id: slope.id,
+        course_rating: slope.course_rating,
+        slope_value: slope.slope_value,
+        name: slope.name,
+        length: slope.length,
+        course: slope.course,
+        tees: tee_json(slope.tees)
+      }
+      cache.set("slope_json_#{id}", slope_json)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    slope_json
   end
 
 end
