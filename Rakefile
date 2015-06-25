@@ -69,6 +69,8 @@ namespace :db do
 
         slopes = []
         c["Loop"]["Slopes"].each do |s|
+          next if s["Gender"] == 0
+
           course_rating = s["CourseRating"]
           slope_value   = s["SlopeValue"]
           male          = s["Gender"] == 1
@@ -99,6 +101,8 @@ namespace :db do
             tee = Tee.create(hole: hole, slope: slope, length: length, lat: lat, lng: lng)
           end
         end
+
+        slopes.each{|s| s.update_attribute(:length, s.tees.map(&:length).sum) }
       end
     end
   end
