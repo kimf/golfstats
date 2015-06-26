@@ -51,21 +51,23 @@ namespace :db do
   desc "Import courses from json files in _data"
   task :courses do
     Dir["_data/courses/*.json"].each do |file|
-      club = JSON.parse(File.read(file))
+      data = JSON.parse(File.read(file))
 
-      next if club["Data"]["Courses"].nil?
+      next if data["Data"]["Courses"].nil?
 
-      lat = club["MapLat"]
-      lng = club["MapLng"]
+      lat = data["MapLat"]
+      lng = data["MapLng"]
 
-      club_name = club["Name"]
+      club_name = data["Name"]
 
-      club["Data"]["Courses"].each do |c|
+      club = Club.create(name: club_name, lat: lat, lng: lng)
+
+      data["Data"]["Courses"].each do |c|
         name        = c["Name"]
         holes_count = c["NumberOfHoles"]
         par         = c["Par"]
 
-        course = Course.create(club: club_name, name: name, holes_count: holes_count, par: par, lat: lat, lng: lng)
+        course = Course.create(club: club, name: name, holes_count: holes_count, par: par)
 
         slopes = []
         c["Loop"]["Slopes"].each do |s|
@@ -103,6 +105,7 @@ namespace :db do
         end
 
         slopes.each{|s| s.update_attribute(:length, s.tees.map(&:length).sum) }
+
       end
     end
   end

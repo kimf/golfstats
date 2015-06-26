@@ -115,13 +115,27 @@ class GolfstatsApi < Grape::API
     @scores
   end
 
-  desc "Returns a list of all the courses"
-  get "/courses" do
-    courses = cache.get("courses_json") || nil
+  desc "Returns a list of all the clubs"
+  get "/clubs" do
+    clubs = cache.get("clubs_json") || nil
 
+    if clubs.nil?
+      clubs = {clubs: Club.all}
+      cache.set("clubs_json", clubs)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    clubs
+  end
+
+  desc "Returns a list of all the courses for a club"
+  get "/clubs/:id/courses" do
+    id = params[:id]
+    courses = cache.get("courses_json_club_#{id}") || nil
     if courses.nil?
-      courses = {courses: Course.all}
-      cache.set("courses_json", courses)
+      courses = {courses: Course.includes(:club).where(club_id: id).all}
+      cache.set("courses_json_club_#{id}", courses)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
@@ -141,8 +155,6 @@ class GolfstatsApi < Grape::API
         name: course.name,
         holes_count: course.holes_count,
         par: course.par,
-        lat: course.lat,
-        lng: course.lng,
         created_at: course.created_at,
         updated_at: course.updated_at,
         club: course.club,
