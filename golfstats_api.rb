@@ -52,7 +52,65 @@ class GolfstatsApi < Grape::API
       Cache.new
     end
 
-    def tee_json(tees)
+    def clubs_json(clubs)
+      clubs_array = []
+      clubs.each do |c|
+        clubs_array << {
+          id: c.id,
+          name: c.name,
+          lat: c.lat,
+          lng: c.lng,
+          updated_at: c.updated_at,
+          courses: courses_json(c.courses)
+        }
+      end
+      clubs_array
+    end
+
+    def courses_json(courses)
+      courses_array = []
+      courses.each do |course|
+        courses_array << {
+          id: course.id,
+          name: course.name,
+          holes_count: course.holes_count,
+          par: course.par,
+          updated_at: course.updated_at,
+          club_id: course.club_id,
+          slopes: slopes_json(course.slopes)
+        }
+      end
+      courses_array
+    end
+
+    def slopes_json(slopes)
+      slopes_array = []
+      slopes.each do |slope|
+        slopes_array << {
+          id: slope.id,
+          course_id: slope.course_id,
+          course_rating: slope.course_rating,
+          slope_value: slope.slope_value,
+          name: slope.name,
+          length: slope.length,
+        }
+      end
+      slopes_array
+    end
+
+    def slope_json(slope)
+      {
+        id: slope.id,
+        course_id: slope.course_id,
+        course_rating: slope.course_rating,
+        slope_value: slope.slope_value,
+        name: slope.name,
+        length: slope.length,
+        tees: tees_json(slope.tees)
+      }
+    end
+
+    def tees_json(tees)
       tees_array = []
       tees.each do |t|
         tees_array << {
@@ -60,7 +118,8 @@ class GolfstatsApi < Grape::API
           length: t.length,
           lat: t.lat,
           lng: t.lng,
-          hole: t.hole
+          hole: t.hole,
+          slope_id: t.slope_id
         }
       end
       tees_array
@@ -120,7 +179,7 @@ class GolfstatsApi < Grape::API
     clubs = cache.get("clubs_json") || nil
 
     if clubs.nil?
-      clubs = {clubs: Club.all}
+      clubs = {clubs: clubs_json(Club.includes(courses: [:slopes]).all)}
       cache.set("clubs_json", clubs)
     end
 
@@ -147,10 +206,10 @@ class GolfstatsApi < Grape::API
   get "/courses/:id" do
     id = params[:id]
 
-    course_json = cache.get("courses_json_#{id}") || nil
-    if course_json.nil?
+    json = cache.get("courses_json_#{id}") || nil
+    if json.nil?
       course = Course.includes(:slopes).find(params[:id])
-      course_json = {
+      json = {
         id: course.id,
         name: course.name,
         holes_count: course.holes_count,
@@ -160,36 +219,28 @@ class GolfstatsApi < Grape::API
         club: course.club,
         slopes: course.slopes
       }
-      cache.set("course_json_#{id}", course_json)
+      cache.set("courses_json_#{id}", json)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
     header 'Expires', (Date.today + 1.year).httpdate
-    course_json
+    json
   end
 
   desc "Returns data for one slope"
   get "/slopes/:id" do
     id = params[:id]
 
-    slope_json = cache.get("courses_json_#{id}") || nil
-    if slope_json.nil?
+    json = cache.get("courses_json_#{id}") || nil
+    if json.nil?
       slope = Slope.includes(:course, tees:[:hole]).find(params[:id])
-      slope_json = {
-        id: slope.id,
-        course_rating: slope.course_rating,
-        slope_value: slope.slope_value,
-        name: slope.name,
-        length: slope.length,
-        course: slope.course,
-        tees: tee_json(slope.tees)
-      }
-      cache.set("slope_json_#{id}", slope_json)
+      json = slope_json(slope)
+      cache.set("slopes_json_#{id}", json)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
     header 'Expires', (Date.today + 1.year).httpdate
-    slope_json
+    json
   end
 
 end
