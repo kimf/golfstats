@@ -20,3 +20,4 @@ npm-debug.log
 testem.log
 log
 _data
+*.sublime-*
