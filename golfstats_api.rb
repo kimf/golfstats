@@ -231,7 +231,7 @@ class GolfstatsApi < Grape::API
   get "/slopes/:id" do
     id = params[:id]
 
-    json = cache.get("courses_json_#{id}") || nil
+    json = cache.get("slopes_json_#{id}") || nil
     if json.nil?
       slope = Slope.includes(:course, tees:[:hole]).find(params[:id])
       json = slope_json(slope)
