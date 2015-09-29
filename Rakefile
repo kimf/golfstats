@@ -5,7 +5,7 @@ require 'bundler/setup'
 Bundler.require(:default)
 require 'open-uri'
 
-require 'byebug'
+#require 'byebug'
 
 #KIM
 USER_ID=1
@@ -221,7 +221,7 @@ namespace :db do
     puts "- STARTING ---------------------------------------------------------------"
 
     courses_json = open("http://golfguide.golfbox.dk/APIS/ScriptHandler.ashx?methodName=GolfSe_GetClubs").read
-    File.open("_data/golfclubs.json","w") do |f|
+    File.open("_data/golfclubs.json","w+") do |f|
       f.write(courses_json)
     end
 
@@ -231,7 +231,7 @@ namespace :db do
       guid = course["GUID"]
 
       course_json = open("http://golfguide.golfbox.dk/APIS/ScriptHandler.ashx?methodName=GetClub&guid=#{guid}").read
-      File.open("_data/courses/#{guid}.json","w") do |f|
+      File.open("_data/courses/#{guid}.json","w+") do |f|
         f.write(course_json)
       end
       c = JSON.parse(course_json)
