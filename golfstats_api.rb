@@ -93,6 +93,7 @@ class GolfstatsApi < Grape::API
           slope_value: slope.slope_value,
           name: slope.name,
           length: slope.length,
+          tee_count: slope.tee_count
         }
       end
       slopes_array
