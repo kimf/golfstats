@@ -1,4 +1,4 @@
-ruby '2.1.3'
+ruby '2.2.1'
 source "https://rubygems.org"
 
 gem 'rake', '10.3.2'
@@ -22,8 +22,6 @@ gem 'tux'
 gem 'nokogiri'
 gem 'typhoeus'
 gem 'dalli'
-
-gem 'newrelic_rpm'
 
 
 group :development do

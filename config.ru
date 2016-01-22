@@ -4,8 +4,6 @@ require 'rack'
 require 'rack/contrib'
 require 'rack/cors'
 
-require 'newrelic_rpm'
-
 if ENV['RACK_ENV'] != 'production'
   require 'rack-livereload'
   use Rack::LiveReload
