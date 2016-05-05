@@ -21,3 +21,4 @@ testem.log
 log
 _data
 *.sublime-*
+.bundle

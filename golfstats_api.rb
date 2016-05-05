@@ -52,7 +52,7 @@ class GolfstatsApi < Grape::API
       Cache.new
     end
 
-    def clubs_json(clubs)
+    def clubs_json(clubs, tisdagsgolfen = false)
       clubs_array = []
       clubs.each do |c|
         clubs_array << {
@@ -61,7 +61,7 @@ class GolfstatsApi < Grape::API
           lat: c.lat,
           lng: c.lng,
           updated_at: c.updated_at,
-          courses: courses_json(c.courses)
+          courses: tisdagsgolfen ? courses_with_holes_json(c.courses) : courses_json(c.courses)
         }
       end
       clubs_array
@@ -81,6 +81,33 @@ class GolfstatsApi < Grape::API
         }
       end
       courses_array
+    end
+
+    def courses_with_holes_json(courses)
+      courses_array = []
+      courses.each do |course|
+        courses_array << {
+          id: course.id,
+          name: course.name,
+          holes_count: course.holes_count,
+          par: course.par,
+          holes: holes_json(course.holes)
+        }
+      end
+      courses_array
+    end
+
+    def holes_json(holes)
+      holes_array = []
+      holes.each do |hole|
+        holes_array << {
+          id: hole.id,
+          number: hole.number,
+          index: hole.index,
+          par: hole.par
+        }
+      end
+      holes_array
     end
 
     def slopes_json(slopes)
@@ -244,4 +271,17 @@ class GolfstatsApi < Grape::API
     json
   end
 
+  desc 'Quick endpoint for Tisdagsgolfens ReactNative app'
+  get '/tisdagsgolfendata' do
+    clubs = cache.get('tisdagsgolfen_clubs_json') || nil
+
+    if clubs.nil?
+      clubs = { clubs: clubs_json(Club.includes(courses: [:holes]).all, true) }
+      cache.set('tisdagsgolfen_clubs_json', clubs)
+    end
+
+    header 'Cache-Control', 'public, max-age=31536000'
+    header 'Expires', (Date.today + 1.year).httpdate
+    clubs
+  end
 end
