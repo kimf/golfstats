@@ -1,4 +1,4 @@
-ruby '2.2.1'
+ruby '2.3.1'
 source "https://rubygems.org"
 
 gem 'rake', '10.3.2'
@@ -25,7 +25,7 @@ gem 'dalli'
 
 
 group :development do
-  gem 'git-deploy', github: 'bkutil/git-deploy' #tmp until mislav updates thor dependency
+  gem 'git-deploy'
 
   gem 'therubyracer'
   gem 'rb-fsevent'
