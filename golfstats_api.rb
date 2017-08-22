@@ -12,7 +12,7 @@ end
 @dbconfig = YAML.load(File.read('database.yml'))
 ActiveRecord::Base.establish_connection @dbconfig[@environment]
 ActiveRecord::Base.logger = Logger.new(STDOUT)
-#, :username => "youruser", :password => "yourpassword"  )
+# , :username => "youruser", :password => "yourpassword"  )
 
 
 require 'byebug' if @environment == "development"
@@ -160,6 +160,7 @@ class GolfstatsApi < Grape::API
 
   desc "Return scorecards updated after given date"
   get "/scorecards" do
+    cache.clear
     year = params[:year].nil? ? "All" : params[:year]
     year_string = year == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
     user_id = params[:user_id].nil? ? 1 : params[:user_id]
@@ -170,7 +171,7 @@ class GolfstatsApi < Grape::API
 
     @scorecards = cache.get("scorecards_#{year}_#{user_id}_json") || nil
     if @scorecards.nil?
-      @scorecards = {scorecards: Scorecard.find_by_sql(query)} #.to_json
+      @scorecards = {scorecards: Scorecard.find_by_sql(query)} # .to_json
       cache.set("scorecards_#{year}_#{user_id}_json", @scorecards)
     end
 
