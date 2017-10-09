@@ -1,7 +1,7 @@
-ruby '2.3.1'
+ruby '2.4.2'
 source "https://rubygems.org"
 
-gem 'rake', '10.3.2'
+gem 'rake'
 gem 'bundler'
 gem 'thin'
 
