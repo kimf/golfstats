@@ -19,3 +19,5 @@ TODO:
 * Show first9 vs last9
 * Delete json cache (and maybe repopulate) for that year + all when new scorecard(s) are imported
 *
+
+* add config for running on heroku, for super-easy deploy and play, then move to fransman.se

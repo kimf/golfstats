@@ -1,4 +1,4 @@
-class AddJsonColToScorecardsMigration <  ActiveRecord::Migration
+class AddJsonColToScorecardsMigration <  ActiveRecord::Migration[5.1.4]
   def up
     add_column :scorecards, :json, :json
   end
