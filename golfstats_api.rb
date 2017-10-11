@@ -163,16 +163,18 @@ class GolfstatsApi < Grape::API
     cache.clear
     year = params[:year].nil? ? "All" : params[:year]
     year_string = year == "All" ?  ""  : "AND EXTRACT(year FROM date) = #{year}"
-    user_id = params[:user_id].nil? ? 1 : params[:user_id]
+    fields = 'id, date, course, par, strokes_out, strokes_in, strokes, points, putts, putts_avg, putts_out, putts_in, '\
+             'girs, firs, strokes_over_par, scores_count, not_par_three_holes, distance, consistency, scores, '\
+             'created_at, updated_at, scoring_distribution, putts_gir_avg'
 
     query = <<-SQL
-      SELECT * FROM scorecards WHERE user_id = #{user_id} AND scores_count = 18 #{year_string} ORDER BY date ASC
+      SELECT #{fields} FROM scorecards WHERE scores_count = 18 #{year_string} ORDER BY date ASC
     SQL
 
-    @scorecards = cache.get("scorecards_#{year}_#{user_id}_json") || nil
+    @scorecards = cache.get("scorecards_#{year}_json") || nil
     if @scorecards.nil?
       @scorecards = {scorecards: Scorecard.find_by_sql(query)} # .to_json
-      cache.set("scorecards_#{year}_#{user_id}_json", @scorecards)
+      cache.set("scorecards_#{year}_json", @scorecards)
     end
 
     if @environment != "development"
