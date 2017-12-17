@@ -287,4 +287,32 @@ class GolfstatsApi < Grape::API
     header 'Expires', (Date.today + 1.year).httpdate
     clubs
   end
+
+  desc 'Update a tees gps positions'
+  params do
+    requires :id, type: Integer
+    requires :lat, type: Float
+    requires :lng, type: Float
+  end
+  post '/tees/:id/position' do
+    tee = Tee.find(params[:id])
+    tee.lat = params[:lat]
+    tee.lng = params[:lng]
+    tee.save
+    tee
+  end
+
+  desc 'Update a holes gps positions'
+  params do
+    requires :id, type: Integer
+    requires :lat, type: Float
+    requires :lng, type: Float
+  end
+  post '/holes/:id/position' do
+    hole = Hole.find(params[:id])
+    hole.green_center_lat = params[:lat]
+    hole.green_center_lng = params[:lng]
+    hole.save
+    hole
+  end
 end
