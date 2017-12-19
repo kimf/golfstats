@@ -193,28 +193,19 @@ class GolfstatsApi < Grape::API
   desc "Returns holes for one course"
   get "/courses/:id/holes" do
     id = params[:id]
-
-    json = cache.get("course_holes_json_#{id}") || nil
-    if json.nil?
-      json = holes_json(Course.includes(:holes).find(params[:id]).holes)
-      cache.set("course_holes_json_#{id}", json)
-    end
-
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
-    json
+    holes_json(Course.find(params[:id]).holes)
   end
 
   desc 'Update a holes gps positions'
   params do
     requires :id, type: Integer
-    requires :teePos, type: Array[Float]
-    requires :holePos, type: Array[Float]
+    optional :teePos, type: Array[Float]
+    optional :holePos, type: Array[Float]
   end
   post '/holes/:id/position' do
     hole = Hole.find(params[:id])
-    hole.tee_pos = params[:teePos]
-    hole.hole_pos = params[:holePos]
+    hole.tee_pos = params[:teePos] || hole.tee_pos
+    hole.hole_pos = params[:holePos] || hole.hole_pos
     hole.save
     hole
   end
