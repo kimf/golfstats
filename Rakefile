@@ -75,37 +75,18 @@ namespace :db do
 
           course_rating = s["CourseRating"]
           slope_value   = s["SlopeValue"]
-          male          = s["Gender"] == 1
           name          = s["TeeColor"]
 
-          slopes << Slope.create(course: course, course_rating: course_rating, slope_value: slope_value, male: male, name: name)
+          slopes << Slope.create(course: course, course_rating: course_rating, slope_value: slope_value, name: name)
         end
 
         c["Loop"]["Holes"].each do |h|
           number            = h["Number"]
           par               = h["Par"]
           index             = h["Index"]
-          green_center_lat  = h["GreenCenterLatitude"]
-          green_center_lng  = h["GreenCenterLongitude"]
-          green_front_lat   = h["GreenFrontLatitude"]
-          green_front_lng   = h["GreenFrontLongitude"]
-          green_depth       = h["GrenDepth"]
 
-          hole = Hole.create(course: course, number: number, par: par, index: index, green_center_lat: green_center_lat, green_center_lng: green_center_lng, green_front_lat: green_front_lat, green_front_lng: green_front_lng, green_depth: green_depth)
-
-
-          h["Tees"].each do |t|
-            slope   = slopes.select{ |s| s.name == t["Color"] }.first
-            length  = t["Length"]
-            lat     = t["TeeLatitude"]
-            lng     = t["TeeLongitude"]
-
-            Tee.create(hole: hole, slope: slope, length: length, lat: lat, lng: lng)
-          end
+          hole = Hole.create(course: course, number: number, par: par, index: index)
         end
-
-        slopes.each{ |s| s.update_attribute(:length, s.tees.map(&:length).sum) }
-
       end
     end
   end

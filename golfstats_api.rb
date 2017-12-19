@@ -12,7 +12,6 @@ end
 @dbconfig = YAML.load(File.read('database.yml'))
 ActiveRecord::Base.establish_connection @dbconfig[@environment]
 ActiveRecord::Base.logger = Logger.new(STDOUT)
-# , :username => "youruser", :password => "yourpassword"  )
 
 
 require 'byebug' if @environment == "development"
@@ -52,7 +51,7 @@ class GolfstatsApi < Grape::API
       Cache.new
     end
 
-    def clubs_json(clubs, tisdagsgolfen = false)
+    def clubs_json(clubs)
       clubs_array = []
       clubs.each do |c|
         clubs_array << {
@@ -61,7 +60,7 @@ class GolfstatsApi < Grape::API
           lat: c.lat,
           lng: c.lng,
           updated_at: c.updated_at,
-          courses: tisdagsgolfen ? courses_with_holes_json(c.courses) : courses_json(c.courses)
+          courses: courses_json(c.courses)
         }
       end
       clubs_array
@@ -83,28 +82,17 @@ class GolfstatsApi < Grape::API
       courses_array
     end
 
-    def courses_with_holes_json(courses)
-      courses_array = []
-      courses.each do |course|
-        courses_array << {
-          id: course.id,
-          name: course.name,
-          holes_count: course.holes_count,
-          par: course.par,
-          holes: holes_json(course.holes)
-        }
-      end
-      courses_array
-    end
-
     def holes_json(holes)
       holes_array = []
       holes.each do |hole|
         holes_array << {
           id: hole.id,
+          course_id: hole.course_id,
           number: hole.number,
           index: hole.index,
-          par: hole.par
+          par: hole.par,
+          hole_pos: hole.hole_pos,
+          tee_pos: hole.tee_pos
         }
       end
       holes_array
@@ -119,8 +107,7 @@ class GolfstatsApi < Grape::API
           course_rating: slope.course_rating,
           slope_value: slope.slope_value,
           name: slope.name,
-          length: slope.length,
-          tee_count: slope.tee_count
+          length: slope.length
         }
       end
       slopes_array
@@ -133,24 +120,8 @@ class GolfstatsApi < Grape::API
         course_rating: slope.course_rating,
         slope_value: slope.slope_value,
         name: slope.name,
-        length: slope.length,
-        tees: tees_json(slope.tees)
+        length: slope.length
       }
-    end
-
-    def tees_json(tees)
-      tees_array = []
-      tees.each do |t|
-        tees_array << {
-          id: t.id,
-          length: t.length,
-          lat: t.lat,
-          lng: t.lng,
-          hole: t.hole,
-          slope_id: t.slope_id
-        }
-      end
-      tees_array
     end
 
     # def authenticate!
@@ -219,99 +190,31 @@ class GolfstatsApi < Grape::API
     clubs
   end
 
-  desc "Returns a list of all the courses for a club"
-  get "/clubs/:id/courses" do
-    id = params[:id]
-    courses = cache.get("courses_json_club_#{id}") || nil
-    if courses.nil?
-      courses = {courses: Course.includes(:club).where(club_id: id).all}
-      cache.set("courses_json_club_#{id}", courses)
-    end
-
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
-    courses
-  end
-
-  desc "Returns data for one course"
-  get "/courses/:id" do
+  desc "Returns holes for one course"
+  get "/courses/:id/holes" do
     id = params[:id]
 
-    json = cache.get("courses_json_#{id}") || nil
+    json = cache.get("course_holes_json_#{id}") || nil
     if json.nil?
-      course = Course.includes(:slopes).find(params[:id])
-      json = {
-        id: course.id,
-        name: course.name,
-        holes_count: course.holes_count,
-        par: course.par,
-        created_at: course.created_at,
-        updated_at: course.updated_at,
-        club: course.club,
-        slopes: course.slopes
-      }
-      cache.set("courses_json_#{id}", json)
+      json = holes_json(Course.includes(:holes).find(params[:id]).holes)
+      cache.set("course_holes_json_#{id}", json)
     end
 
     header 'Cache-Control', 'public, max-age=31536000'
     header 'Expires', (Date.today + 1.year).httpdate
     json
-  end
-
-  desc "Returns data for one slope"
-  get "/slopes/:id" do
-    id = params[:id]
-
-    json = cache.get("slopes_json_#{id}") || nil
-    if json.nil?
-      slope = Slope.includes(:course, tees:[:hole]).find(params[:id])
-      json = slope_json(slope)
-      cache.set("slopes_json_#{id}", json)
-    end
-
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
-    json
-  end
-
-  desc 'Quick endpoint for Tisdagsgolfens ReactNative app'
-  get '/tisdagsgolfendata' do
-    clubs = cache.get('tisdagsgolfen_clubs_json') || nil
-
-    if clubs.nil?
-      clubs = { clubs: clubs_json(Club.includes(courses: [:holes]).all, true) }
-      cache.set('tisdagsgolfen_clubs_json', clubs)
-    end
-
-    header 'Cache-Control', 'public, max-age=31536000'
-    header 'Expires', (Date.today + 1.year).httpdate
-    clubs
-  end
-
-  desc 'Update a tees gps positions'
-  params do
-    requires :id, type: Integer
-    requires :lat, type: Float
-    requires :lng, type: Float
-  end
-  post '/tees/:id/position' do
-    tee = Tee.find(params[:id])
-    tee.lat = params[:lat]
-    tee.lng = params[:lng]
-    tee.save
-    tee
   end
 
   desc 'Update a holes gps positions'
   params do
     requires :id, type: Integer
-    requires :lat, type: Float
-    requires :lng, type: Float
+    requires :teePos, type: Array[Float]
+    requires :holePos, type: Array[Float]
   end
   post '/holes/:id/position' do
     hole = Hole.find(params[:id])
-    hole.green_center_lat = params[:lat]
-    hole.green_center_lng = params[:lng]
+    hole.tee_pos = params[:teePos]
+    hole.hole_pos = params[:holePos]
     hole.save
     hole
   end
