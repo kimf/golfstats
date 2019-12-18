@@ -58,7 +58,7 @@ GEM
       mini_portile2 (~> 2.3.0)
     oj (3.3.8)
     pg (0.21.0)
-    rack (2.0.3)
+    rack (2.0.8)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (1.2.0)
